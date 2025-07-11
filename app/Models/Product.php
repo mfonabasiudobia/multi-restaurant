@@ -173,6 +173,11 @@ class Product extends Model
             if ($firstMedia && $firstMedia->src) {
                 $thumbnail = $this->transformUrl($firstMedia->src);
             }
+        }else if ($this->videos()->exists()) {
+            $firstMedia = $this->videos()->first();
+            if ($firstMedia && $firstMedia->thumbnail) {
+                $thumbnail = $this->transformUrl($firstMedia->thumbnail);
+            }
         }
 
         return new Attribute(
