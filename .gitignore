@@ -1,0 +1,18 @@
+# Ignore everything
+/*
+
+# Except the following directories:
+!app/
+!resources/
+!routes/
+
+# But still ignore unnecessary files inside them (optional)
+resources/js/bootstrap.js
+resources/sass/
+resources/views/welcome.blade.php
+
+# Optional: ignore some files inside these directories
+!.gitignore
+
+# If you want to include artisan, composer.json, etc., remove this:
+# (Otherwise, all other files like .env, vendor, public etc. are ignored)

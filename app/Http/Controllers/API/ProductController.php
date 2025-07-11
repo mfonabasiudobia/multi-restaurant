@@ -1,0 +1,570 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\AddFavoriteRequest;
+use App\Http\Requests\ReviewRequest;
+use App\Http\Resources\ProductDetailsResource;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\ReviewResource;
+use App\Repositories\ProductRepository;
+use App\Repositories\ReviewRepository;
+use Illuminate\Http\Request;
+use App\Models\Product;
+use Illuminate\Support\Facades\Log;
+use App\Models\Unit;
+use App\Models\DeliveryWeight;
+use App\Models\InnerAd;
+use Illuminate\Support\Facades\Storage;
+
+class ProductController extends Controller
+{
+    /**
+     * Retrieve a paginated list of products based on the provided request parameters.
+     *
+     * @param  Request  $request  The request object containing page, per_page, and search parameters
+     * @return Some_Return_Value The JSON response containing total and products data
+     */
+    public function index(Request $request)
+    {
+        $query = Product::query()->isActive();
+
+        // Apply quality filter
+        if ($request->has('quality')) {
+            $query->where('quality_id', $request->quality);
+        }
+
+        // Apply season filter
+        if ($request->has('season')) {
+            $query->where('season_id', $request->season);
+        }
+
+        // Apply sorting
+        switch ($request->get('sort', 'newest')) {
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->latest();
+                break;
+        }
+
+        $products = $query->paginate(20);
+
+        return $this->json('products', [
+            'products' => ProductResource::collection($products)
+        ]);
+    }
+
+    /**
+     * Show the product details.
+     *
+     * @param  datatype  $id  description
+     * @return response
+     */
+    public function show(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $product = ProductRepository::find($request->product_id);
+
+        ProductRepository::recentView($product);
+
+        $relatedProducts = ProductRepository::query()
+            ->whereHas('categories', function ($query) use ($product) {
+                $query->whereIn('categories.id', $product->categories->pluck('id'));
+            })
+            ->where('id', '!=', $product->id)
+            ->isActive()
+            ->inRandomOrder()
+            ->limit(6)
+            ->get();
+
+        $shop = $product->shop;
+        $popularProducts = $shop->products()
+            ->isActive()
+            ->where('id', '!=', $product->id)
+            ->withCount('orders')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->orderByDesc('average_rating')
+            ->orderByDesc('orders_count')
+            ->take(6)
+            ->get();
+
+        $vatTaxes = $product->vatTaxes;
+
+        // Get delivery weights with active status
+        $deliveryWeights = DeliveryWeight::where('is_active', true)
+            ->orderBy('min_weight')
+            ->get();
+
+        // Get weight unit
+        $weightUnit = \App\Models\Unit::where('is_weight', true)
+            ->whereNull('shop_id')
+            ->first();
+
+        $innerAds = InnerAd::where('status', true)
+            ->latest()
+            ->get();
+        \Log::info('inner ads', [$innerAds]);
+
+        return $this->json('Product details', [
+            'product' => new ProductDetailsResource($product),
+            'related_products' => ProductResource::collection($relatedProducts),
+            'popular_products' => ProductResource::collection($popularProducts),
+            'vat_taxes' => $vatTaxes,
+            'delivery_weights' => $deliveryWeights,
+            'weight_unit' => $weightUnit ? $weightUnit->name : 'KG',
+            'sizes' => [2, 20],
+            'inner_ads' => $innerAds
+        ]);
+    }
+
+
+    /**
+     * Add or remove favorite product for the user.
+     *
+     * @param  AddFavoriteRequest  $request  The request for adding a favorite.
+     * @return json Response with favorite updated successfully
+     */
+    public function addFavorite(AddFavoriteRequest $request)
+    {
+        $product = ProductRepository::find($request->product_id);
+
+        auth()->user()->customer->favorites()->toggle($product->id);
+
+        return $this->json('favorite updated successfully', [
+            'product' => ProductResource::make($product),
+        ]);
+    }
+
+    /**
+     * get list of favorite products.
+     *
+     * @return json Response
+     */
+    public function favoriteProducts()
+    {
+        $products = auth()->user()->customer->favorites;
+
+        return $this->json('favorite products', [
+            'products' => ProductResource::collection($products),
+        ]);
+    }
+
+    /**
+     * Store a new review.
+     *
+     * @param  ReviewRequest  $request  The review request
+     * @return json Response
+     */
+    public function storeReview(ReviewRequest $request)
+    {
+        $product = ProductRepository::find($request->product_id);
+
+        $hasReview = $product->reviews()->where('customer_id', auth()->user()->customer->id)->where('order_id', $request->order_id)->first();
+
+        if ($hasReview) {
+            return $this->json('review already exists', [
+                'review' => ReviewResource::make($hasReview),
+            ]);
+        }
+
+        $review = ReviewRepository::storeByRequest($request, $product);
+
+        return $this->json('review added successfully', [
+            'review' => ReviewResource::make($review),
+        ]);
+    }
+
+    /**
+     * Get latest products
+     */
+    public function getLatestProducts()
+    {
+        $products = ProductRepository::query()
+            ->isActive()
+            ->withCount('orders as orders_count')
+            ->withAvg('reviews as average_rating', 'rating')
+            ->latest()
+            ->take(60)
+            ->get();
+
+        return $this->json('Latest products', [
+            'products' => ProductResource::collection($products)
+        ]);
+    }
+
+    public function filter(Request $request)
+    {
+        try {
+            Log::info('Filter request params:', $request->all());
+
+            $query = Product::query()->with(['videos']);
+
+            // Apply quality filter
+            if ($request->filled('quality')) {
+                $query->where('quality_id', $request->quality);
+            }
+
+            // Apply season filter
+            if ($request->filled('season')) {
+                $query->where('season_id', $request->season);
+            }
+
+            // Apply sorting
+            switch ($request->input('sort', 'newest')) {
+                case 'oldest':
+                    $query->oldest();
+                    break;
+                case 'price_low':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'newest':
+                default:
+                    $query->latest();
+                    break;
+            }
+
+            // Only get active and approved products
+            $query->where('is_active', 1)
+                ->where('is_approve', 1);
+
+            $perPage = $request->input('per_page', 12);
+            $products = $query->paginate($perPage);
+
+            Log::info('Filtered products count: ' . $products->count());
+
+            return response()->json([
+                'data' => ProductResource::collection($products),
+                'meta' => [
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in product filter: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to filter products'], 500);
+        }
+    }
+
+    /**
+     * Filter products with advanced filtering options
+     */
+    public function advancedFilter(Request $request)
+    {
+        try {
+            Log::info('Advanced Filter request params:', $request->all());
+
+            $query = Product::query()->with(['videos', 'categories', 'subCategories']);
+
+            // Parse filters from request
+            $filters = json_decode($request->input('filters', '{}'), true);
+            Log::info('Parsed filters:', $filters);
+
+            // Search filter
+            if ($request->filled('search')) {
+
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                      ->orWhere('description', 'like', '%' . $request->search . '%');
+                });
+            }
+
+      
+
+            // Apply category_id filter ONLY if the Categories filter is empty or not provided
+            // This allows "All" selection to show all products without category restriction
+            if (
+                $request->filled('category_id') &&
+                (empty($filters['Categories']) || count(array_filter($filters['Categories'] ?? [])) === 0)
+            ) {
+                $query->whereHas('categories', function ($q) use ($request) {
+                    $q->where('categories.id', $request->category_id)->active();
+                });
+            }
+
+            // Apply filters based on the filters object
+            if (!empty($filters)) {
+                // Apply subcategories filter using the existing relationship (check both Categories and Subcategories for backward compatibility)
+                if ((isset($filters['Categories']) && !empty($filters['Categories'])) ||
+                    (isset($filters['Subcategories']) && !empty($filters['Subcategories']))
+                ) {
+
+
+
+                    // Get subcategories from either filter key
+                    $selectedSubcategories = [];
+
+                    if (isset($filters['Categories']) && !empty($filters['Categories'])) {
+                        $selectedSubcategories = array_merge($selectedSubcategories, array_keys(array_filter($filters['Categories'])));
+                    }
+
+                    if (isset($filters['Subcategories']) && !empty($filters['Subcategories'])) {
+                        $selectedSubcategories = array_merge($selectedSubcategories, array_keys(array_filter($filters['Subcategories'])));
+                    }
+
+
+
+                    if (!empty($selectedSubcategories)) {
+                        $query->whereHas('subCategories', function ($q) use ($selectedSubcategories) {
+                            $q->whereIn('sub_categories.name', $selectedSubcategories)->where('is_active', 1);
+                        });
+                    }
+                }
+
+                // Apply size filter
+                if (isset($filters['Size']) && !empty($filters['Size'])) {
+                    $selectedSizes = array_keys(array_filter($filters['Size']));
+                    if (!empty($selectedSizes)) {
+                        $query->whereHas('sizes', function ($q) use ($selectedSizes) {
+                            $q->whereIn('name', $selectedSizes)
+                                ->orWhereIn('sizes.id', $selectedSizes);
+                        });
+                    }
+                }
+
+                // Apply color filter
+                if (isset($filters['Color']) && !empty($filters['Color'])) {
+                    $selectedColors = array_keys(array_filter($filters['Color']));
+                    if (!empty($selectedColors)) {
+                        // Using a more efficient approach with a single query
+                        $query->where(function ($q) use ($selectedColors) {
+                            foreach ($selectedColors as $color) {
+                                $q->orWhere('colors', 'like', '%"' . $color . '"%')
+                                    ->orWhere('colors', 'like', '%' . $color . '%');
+                            }
+                        });
+                    }
+                }
+
+                // Apply season filter
+                if (isset($filters['Season']) && !empty($filters['Season'])) {
+                    $selectedSeasons = array_keys(array_filter($filters['Season']));
+                    if (!empty($selectedSeasons)) {
+                        $query->whereHas('season', function ($q) use ($selectedSeasons) {
+                            $q->whereIn('id', $selectedSeasons);
+                        });
+                    }
+                }
+
+                // Apply quality filter
+                if (isset($filters['Quality']) && !empty($filters['Quality'])) {
+                    $selectedQualities = array_keys(array_filter($filters['Quality']));
+                    if (!empty($selectedQualities)) {
+                        $query->whereHas('quality', function ($q) use ($selectedQualities) {
+                            $q->whereIn('name', $selectedQualities);
+                        });
+                    }
+                }
+
+                // Apply price filter - only if min and max are not both 0
+                if (isset($filters['Price'])) {
+                    $min = $filters['Price']['min'] ?? null;
+                    $max = $filters['Price']['max'] ?? null;
+
+                    if ($min !== null && $min > 0) {
+                        $query->where('price', '>=', $min);
+                    }
+                    if ($max !== null && $max > 0) {
+                        $query->where('price', '<=', $max);
+                    }
+                }
+            }
+
+            // Only get active and approved products
+            $query->where('is_active', 1)
+                ->where('quantity', '>', 0)
+                ->where('is_approve', 1);
+
+            $perPage = $request->input('per_page', 20);
+
+            // Add debug logging
+            Log::info('SQL Query:', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+
+         
+
+            $products = $query->paginate($perPage);
+
+            Log::info('Filtered products count: ' . $products->count());
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'products' => ProductResource::collection($products),
+                    'meta' => [
+                        'current_page' => $products->currentPage(),
+                        'last_page' => $products->lastPage(),
+                        'per_page' => $products->perPage(),
+                        'total' => $products->total()
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in advanced product filter: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching products',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Filter products specifically for shop details page
+     */
+    public function shopFilter(Request $request)
+    {
+
+        try {
+            $query = Product::query()
+                ->with(['categories', 'subCategories', 'quality', 'season'])
+                ->where('shop_id', $request->shop_id)
+                ->where('is_active', 1)
+                ->where('is_approve', 1);
+
+            // Search filter
+            if ($request->filled('search')) {
+
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'like', '' . $request->search . '');
+                      //  ->orWhere('description', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            // Categories filter
+            if ($request->filled('categories')) {
+                $categoryIds = explode(',', $request->categories);
+                $query->whereHas('categories', function ($q) use ($categoryIds) {
+                    $q->whereIn('categories.id', $categoryIds)->active();
+                });
+            }
+
+            // Subcategories filter
+            if ($request->filled('subcategories')) {
+                $subcategoryIds = explode(',', $request->subcategories);
+                $query->whereHas('subCategories', function ($q) use ($subcategoryIds) {
+                    $q->whereIn('sub_categories.id', $subcategoryIds)->where('is_active', 1);
+                });
+            }
+
+            // Parse other filters
+            $filters = json_decode($request->input('filters', '{}'), true);
+
+            if (!empty($filters)) {
+                // Categories filter from filters object
+                if (!empty($filters['Categories'])) {
+                    $selectedCategories = array_keys(array_filter($filters['Categories']));
+                    if (!empty($selectedCategories)) {
+                        $query->whereHas('categories', function ($q) use ($selectedCategories) {
+                            $q->whereIn('categories.name', $selectedCategories)->active();
+                        });
+                    }
+                }
+
+                // Subcategories filter from filters object (check both Categories and Subcategories for backward compatibility)
+                if ((isset($filters['Categories']) && !empty($filters['Categories'])) ||
+                    (isset($filters['Subcategories']) && !empty($filters['Subcategories']))
+                ) {
+
+                    // Get subcategories from either filter key
+                    $selectedSubcategories = [];
+
+                    if (isset($filters['Categories']) && !empty($filters['Categories'])) {
+                        $selectedSubcategories = array_merge($selectedSubcategories, array_keys(array_filter($filters['Categories'])));
+                    }
+
+                    if (isset($filters['Subcategories']) && !empty($filters['Subcategories'])) {
+                        $selectedSubcategories = array_merge($selectedSubcategories, array_keys(array_filter($filters['Subcategories'])));
+                    }
+
+                    if (!empty($selectedSubcategories)) {
+                        $query->whereHas('subCategories', function ($q) use ($selectedSubcategories) {
+                            $q->whereIn('sub_categories.name', $selectedSubcategories);
+                        });
+                    }
+                }
+
+                // Size filter
+                if (!empty($filters['Size'])) {
+                    $selectedSizes = array_keys(array_filter($filters['Size']));
+                    if (!empty($selectedSizes)) {
+                        $query->whereHas('sizes', function ($q) use ($selectedSizes) {
+                            $q->whereIn('name', $selectedSizes)
+                                ->orWhereIn('sizes.id', $selectedSizes);
+                        });
+                    }
+                }
+
+                // Season filter
+                if (!empty($filters['Season'])) {
+                    $selectedSeasons = array_keys(array_filter($filters['Season']));
+                    if (!empty($selectedSeasons)) {
+                        $query->whereHas('season', function ($q) use ($selectedSeasons) {
+                            $q->whereIn('name', $selectedSeasons);
+                        });
+                    }
+                }
+
+                // Quality filter
+                if (!empty($filters['Quality'])) {
+                    $selectedQualities = array_keys(array_filter($filters['Quality']));
+                    if (!empty($selectedQualities)) {
+                        $query->whereHas('quality', function ($q) use ($selectedQualities) {
+                            $q->whereIn('name', $selectedQualities);
+                        });
+                    }
+                }
+            }
+
+            // Add debug logging
+            \Log::info('Shop Filter Query:', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings(),
+                'filters' => $filters
+            ]);
+
+            // Pagination
+            $perPage = $request->input('per_page', 12);
+            $products = $query->latest()->paginate($perPage);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'products' => ProductResource::collection($products),
+                    'meta' => [
+                        'current_page' => $products->currentPage(),
+                        'last_page' => $products->lastPage(),
+                        'per_page' => $products->perPage(),
+                        'total' => $products->total()
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in shop product filter: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching products',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+}

@@ -1,0 +1,508 @@
+<template>
+    <div class="mx-18 sm:mx-4 lg:mx-18 md:mx-5 xs:mx-2 py-8">
+        <!-- Filter Row -->
+        <div class="filter-layout mb-8">
+            <!-- Filter Header -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex-1 sm:hidden">All Products</div>
+                <!-- Desktop Filter Buttons -->
+                <div class="hidden sm:flex items-center gap-4">
+                <!-- Quality Filter -->
+                    <div class="filter-group">
+                        <button 
+                            @click.stop="toggleFilter('Quality')"
+                            class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium"
+                            :class="{ 'border-primary text-primary': activeFilter === 'Quality' }"
+                        >
+                            {{ $t('Quality') }}
+                            <span v-if="selectedQuality" class="bg-primary text-white text-xs rounded-full px-2 py-0.5">1</span>
+                        </button>
+                        <!-- Quality Popup -->
+                        <div v-if="activeFilter === 'Quality'" class="filter-popup">
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <label 
+                                        v-for="quality in master.qualities" 
+                                        :key="quality.id"
+                                        class="filter-option"
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.quality == quality.id"
+                                            @change="() => { filters.quality = quality.id; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ quality.name }}</span>
+                                    </label>
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="!filters.quality"
+                                            @change="() => { filters.quality = ''; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('All') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Season Filter -->
+                    <div class="filter-group">
+                        <button 
+                            @click.stop="toggleFilter('Season')"
+                            class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium"
+                            :class="{ 'border-primary text-primary': activeFilter === 'Season' }"
+                        >
+                            {{ $t('Season') }}
+                            <span v-if="selectedSeason" class="bg-primary text-white text-xs rounded-full px-2 py-0.5">1</span>
+                        </button>
+                        <!-- Season Popup -->
+                        <div v-if="activeFilter === 'Season'" class="filter-popup">
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <label 
+                                        v-for="season in master.seasons" 
+                                        :key="season.id"
+                                        class="filter-option"
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.season == season.id"
+                                            @change="() => { filters.season = season.id; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ season.name }}</span>
+                                    </label>
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="!filters.season"
+                                            @change="() => { filters.season = ''; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('All') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+
+                    <!-- Sort Filter -->
+                    <div class="filter-group">
+                        <button 
+                            @click.stop="toggleFilter('Sort')"
+                            class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium"
+                            :class="{ 'border-primary text-primary': activeFilter === 'Sort' }"
+                        >
+                            {{ $t('Sort') }}
+                            <span v-if="filters.sort !== 'newest'" class="bg-primary text-white text-xs rounded-full px-2 py-0.5">1</span>
+                        </button>
+                        <!-- Sort Popup -->
+                        <div v-if="activeFilter === 'Sort'" class="filter-popup">
+                            <div class="p-4">
+                                <div class="space-y-2">
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'newest'"
+                                            @change="() => { filters.sort = 'newest'; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('Newest') }}</span>
+                                    </label>
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'oldest'"
+                                            @change="() => { filters.sort = 'oldest'; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('Oldest') }}</span>
+                                    </label>
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'price_low'"
+                                            @change="() => { filters.sort = 'price_low'; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('Price: Low to High') }}</span>
+                                    </label>
+                                    <label class="filter-option">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'price_high'"
+                                            @change="() => { filters.sort = 'price_high'; applyFilters(); }"
+                                        >
+                                        <span class="ml-2">{{ $t('Price: High to Low') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        v-if="hasActiveFilters"
+                        @click="clearFilters"
+                        class="px-4 py-2 text-red-500 hover:text-red-600 transition-colors duration-200"
+                    >
+                        {{ $t('Clear All') }}
+                    </button>
+                </div>
+
+                <!-- Mobile Filter Button -->
+                <button 
+                    @click="showMobileFilters = true"
+                    class="sm:hidden flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 text-sm font-medium"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                    </svg>
+                    {{ $t('Filters') }}
+                    <span v-if="totalActiveFilters" class="bg-primary text-white text-xs rounded-full px-2 py-0.5">
+                        {{ totalActiveFilters }}
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Filter Dialog -->
+        <div v-if="showMobileFilters" class="fixed inset-0 z-50 overflow-hidden">
+            <div class="absolute inset-0 bg-black bg-opacity-25" @click="showMobileFilters = false"></div>
+            <div class="fixed inset-x-0 bottom-0 max-h-[85vh] transform overflow-hidden rounded-t-xl bg-white shadow-xl transition-all">
+                <div class="flex h-full flex-col">
+                    <!-- Handle bar for bottom sheet -->
+                    <div class="mx-auto w-12 h-1.5 bg-gray-300 rounded-full my-3"></div>
+                    
+                    <div class="px-4 py-3 sm:px-6 border-b">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-medium text-gray-900">
+                                {{ $t('Filters') }}
+                            </h2>
+                            <button 
+                                @click="showMobileFilters = false"
+                                class="text-gray-400 hover:text-gray-500"
+                            >
+                                <span class="sr-only">{{ $t('Close') }}</span>
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto px-4 py-4">
+                        <!-- Filter Groups -->
+                        <div class="space-y-6">
+                            <!-- Quality Filter -->
+                            <div class="filter-group-mobile">
+                                <h3 class="font-medium mb-3">{{ $t('Quality') }}</h3>
+                                <div class="space-y-2">
+                                    <label 
+                                        v-for="quality in master.qualities" 
+                                        :key="quality.id"
+                                        class="filter-option-mobile"
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.quality == quality.id"
+                                            @change="() => { filters.quality = quality.id; }"
+                                        >
+                                        <span class="ml-2">{{ quality.name }}</span>
+                                    </label>
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="!filters.quality"
+                                            @change="() => { filters.quality = ''; }"
+                                        >
+                                        <span class="ml-2">{{ $t('All') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Season Filter -->
+                            <div class="filter-group-mobile">
+                                <h3 class="font-medium mb-3">{{ $t('Season') }}</h3>
+                                <div class="space-y-2">
+                                    <label 
+                                        v-for="season in master.seasons" 
+                                        :key="season.id"
+                                        class="filter-option-mobile"
+                                    >
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.season == season.id"
+                                            @change="() => { filters.season = season.id; }"
+                                        >
+                                        <span class="ml-2">{{ season.name }}</span>
+                                    </label>
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="!filters.season"
+                                            @change="() => { filters.season = ''; }"
+                                        >
+                                        <span class="ml-2">{{ $t('All') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Sort Filter -->
+                            <div class="filter-group-mobile">
+                                <h3 class="font-medium mb-3">{{ $t('Sort') }}</h3>
+                                <div class="space-y-2">
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'newest'"
+                                            @change="() => { filters.sort = 'newest'; }"
+                                        >
+                                        <span class="ml-2">{{ $t('Newest') }}</span>
+                                    </label>
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'oldest'"
+                                            @change="() => { filters.sort = 'oldest'; }"
+                                        >
+                                        <span class="ml-2">{{ $t('Oldest') }}</span>
+                                    </label>
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'price_low'"
+                                            @change="() => { filters.sort = 'price_low'; }"
+                                        >
+                                        <span class="ml-2">{{ $t('Price: Low to High') }}</span>
+                                    </label>
+                                    <label class="filter-option-mobile">
+                                        <input 
+                                            type="radio" 
+                                            :checked="filters.sort === 'price_high'"
+                                            @change="() => { filters.sort = 'price_high'; }"
+                                        >
+                                        <span class="ml-2">{{ $t('Price: High to Low') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="border-t bg-white px-4 py-4">
+                        <div class="flex gap-4">
+                            <button 
+                                v-if="hasActiveFilters"
+                                @click="clearFilters"
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            >
+                                {{ $t('Clear All') }}
+                            </button>
+                            <button 
+                                @click="applyMobileFilters"
+                                class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+                            >
+                                {{ $t('Apply Filters') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div v-if="!loading">
+    
+            <div v-if="products?.data && products.data.length > 0"  class=" gap-3 flex flex-wrap md:justify-start max-sm:p-6 ">
+                    
+                    <div v-for="product in products.data" :key="product.id" class="flex-none  w-[200px] md:w-[218px]">
+                        <ProductCard :product="product" />
+                    </div>
+                </div>
+
+            <div v-else class="text-center py-8">
+                <p class="text-gray-500">{{ $t('No products found') }}</p>
+            </div>
+        </div>
+        <div v-else class="text-center py-8">
+            <p class="text-gray-500">{{ $t('Loading...') }}</p>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="products?.meta?.last_page > 1" class="mt-8">
+            <Pagination 
+                :pagination="products.meta" 
+                @page-changed="changePage" 
+            />
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useMaster } from '../stores/MasterStore'
+import ProductCard from '../components/ProductCard.vue'
+import Pagination from '../components/Pagination.vue'
+import axios from 'axios'
+
+const route = useRoute()
+const router = useRouter()
+const master = useMaster()
+
+const products = ref({})
+const loading = ref(false)
+const filters = ref({
+    quality: '',
+    season: '',
+    sort: 'newest',
+    page: 1
+})
+
+const activeFilter = ref(null)
+const showMobileFilters = ref(false)
+
+// Computed properties for filter indicators
+const selectedQuality = computed(() => filters.value.quality)
+const selectedSeason = computed(() => filters.value.season)
+const hasActiveFilters = computed(() => {
+    return filters.value.quality || filters.value.season || filters.value.sort !== 'newest'
+})
+const totalActiveFilters = computed(() => {
+    let count = 0
+    if (filters.value.quality) count++
+    if (filters.value.season) count++
+    if (filters.value.sort !== 'newest') count++
+    return count
+})
+
+const fetchProducts = async () => {
+    try {
+        console.log('pagination Making API request to:', '/products/filter')
+        console.log('Fetching products with filters:', filters.value)
+        loading.value = true
+        const response = await axios.get('/products/filter', {
+            params: filters.value
+        })
+        console.log('API Response:', response.data)
+        products.value = response.data
+    } catch (error) {
+        console.log('API Request failed:', error.response || error)
+        console.error('Error fetching products:', error)
+        products.value = {}
+    } finally {
+        loading.value = false
+    }
+}
+
+const applyFilters = () => {
+    // Reset page when filters change
+    filters.value.page = 1
+    
+    // Close any open filter popup
+    activeFilter.value = null
+    
+    // Update URL with new filters
+    router.push({
+        query: {
+            ...filters.value,
+            page: undefined // Remove page from URL if it's 1
+        }
+    })
+}
+
+const applyMobileFilters = () => {
+    showMobileFilters.value = false
+    applyFilters()
+}
+
+const clearFilters = () => {
+    filters.value = {
+        quality: '',
+        season: '',
+        sort: 'newest',
+        page: 1
+    }
+    
+    activeFilter.value = null
+    router.push({ query: {} })
+}
+
+const changePage = (page) => {
+    filters.value.page = page
+    router.push({
+        query: { ...filters.value }
+    })
+}
+
+const toggleFilter = (name) => {
+    if (activeFilter.value === name) {
+        activeFilter.value = null
+        return
+    }
+    activeFilter.value = name
+}
+
+// Handle clicks outside filter dropdowns
+const handleClickOutside = (event) => {
+    if (activeFilter.value && !event.target.closest('.filter-group')) {
+        activeFilter.value = null
+    }
+}
+
+// Now watch for route changes
+watch(() => route.query, (newQuery) => {
+    console.log('Route query changed:', newQuery)
+    filters.value = {
+        quality: newQuery.quality || '',
+        season: newQuery.season || '',
+        sort: newQuery.sort || 'newest',
+        page: newQuery.page || 1
+    }
+    console.log('Updated filters:', filters.value)
+    fetchProducts()
+}, { immediate: true })
+
+onMounted(() => {
+    window.scrollTo(0, 0);
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+</script> 
+
+<style scoped>
+.filter-layout {
+    @apply flex flex-col gap-6;
+}
+
+.filter-group {
+    @apply relative;
+}
+
+.filter-popup {
+    @apply absolute top-full left-0 mt-2 bg-white rounded-lg border border-gray-200 shadow-lg z-50 min-w-[200px];
+}
+
+.filter-option {
+    @apply flex items-center text-sm text-gray-600 cursor-pointer hover:bg-gray-50 px-2 py-1.5 rounded-md;
+}
+
+.filter-option input[type="radio"] {
+    @apply rounded-full border-gray-300 text-primary focus:ring-primary;
+}
+
+.filter-group-mobile {
+    @apply pb-4 border-b border-gray-200;
+}
+
+.filter-group-mobile:last-child {
+    @apply border-b-0 pb-0;
+}
+
+.filter-option-mobile {
+    @apply flex items-center text-sm text-gray-600 cursor-pointer;
+}
+
+.filter-option-mobile input[type="radio"] {
+    @apply rounded-full border-gray-300 text-primary focus:ring-primary;
+}
+</style> 

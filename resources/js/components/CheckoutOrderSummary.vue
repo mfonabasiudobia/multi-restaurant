@@ -1,0 +1,1126 @@
+<template>
+    <div>
+
+        <div class="p-6 bg-white rounded-2xl border border-slate-200">
+            <div class="text-slate-950 text-xl font-medium leading-7">
+                {{ $t('Order Summary') }}
+            </div>
+
+            <!-- Subtotal -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ $t('Subtotal') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ master.showCurrency(basketStore.total_amount) }}
+                </div>
+            </div>
+
+            <!-- Discount -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-red-500 text-base font-normal leading-normal">
+                    {{ $t('Discount') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    -{{ master.showCurrency(basketStore.coupon_discount) }}
+                </div>
+            </div>
+
+            <div class="w-full h-[0px] border-t border-dashed border-slate-400"></div>
+
+            <!-- Subtotal After Discount -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ $t('Subtotal After Discount') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ master.showCurrency((basketStore.total_amount - basketStore.coupon_discount).toFixed(2)) }}
+                </div>
+            </div>
+
+            <!-- Total Weight -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ $t('Total Weight') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ calculateTotalWeight().toFixed(2) }} {{ weightUnit }}
+                </div>
+            </div>
+
+            <!-- Shipping Charge -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ $t('Shipping Charge') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ master.showCurrency(basketStore.delivery_charge) }}
+                </div>
+            </div>
+
+            <!-- vat and tax -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ $t('Vat & Tax (19%)') }}
+                </div>
+                <div class="text-slate-950 text-base font-normal leading-normal">
+                    {{ master.showCurrency(basketStore.order_tax_amount) }}
+                </div>
+            </div>
+
+            <div class="w-full h-[0px] border border-slate-500"></div>
+
+            <!-- Total Payable -->
+            <div class="my-4 flex justify-between gap-4">
+                <div class="text-slate-950 text-lg font-medium leading-normal tracking-tight">
+                    {{ $t('Total Payable') }}
+                </div>
+                <div class="text-slate-950 text-lg font-medium leading-normal tracking-tight">
+                    {{ master.showCurrency(basketStore.payable_amount) }}
+                </div>
+            </div>
+
+            <!-- Delivery Options -->
+            <div class="mt-4">
+                <div class="text-slate-950 text-base font-medium mb-3">
+                    {{ $t('Delivery Method') }}
+                </div>
+                <!-- GLS Delivery Option - Always Selected -->
+                <div
+                    class="flex items-center justify-between p-4 rounded-lg border border-primary shadow-sm w-full bg-white">
+                    <div class="flex items-center gap-4">
+                        <input
+                            type="radio"
+                            checked
+                            disabled
+                            class="w-5 h-5 text-primary border-gray-300 cursor-not-allowed"
+                        />
+                        <div class="flex flex-col">
+                            <span class="text-lg font-medium">{{ $t('GLS Express') }}</span>
+                            <span class="text-gray-600">{{ $t('Fast & secure delivery') }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-primary font-medium">
+                            {{ master.showCurrency(basketStore.delivery_charge) }}
+                        </div>
+                        <div class="w-16 h-10 rounded flex items-center justify-center">
+                            <img
+                                src="https://logowik.com/content/uploads/images/gls-shipping3559.jpg"
+                                alt="gls"
+                                class="w-full h-full object-contain"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Have a coupon -->
+            <div class="p-4 mt-6 bg-slate-100 rounded-xl">
+                <div class="text-black text-base font-normal leading-normal">
+                    {{ $t('Have a coupon') }}?
+                </div>
+
+                <!-- Coupon Input -->
+                <div class="relative mt-2">
+                    <input
+                        type="text"
+                        v-model="coupon"
+                        class="formInputCoupon pr-14 p-3"
+                        :placeholder="$t('Enter coupon code')"
+                        :class="hasCoupon ? 'text-green-500 pl-10' : ''"
+                    />
+
+                    <button
+                        v-if="!hasCoupon"
+                        class="bg-slate-700 absolute top-1/2 -translate-y-1/2 right-1.5 h-10 w-10 rounded flex justify-center items-center"
+                        @click="ApplyCoupon"
+                    >
+                        <ArrowRightIcon class="w-6 h-6 text-white" />
+                    </button>
+
+                    <button
+                        v-else
+                        class="bg-slate-100 absolute top-1/2 -translate-y-1/2 right-1.5 h-10 w-10 rounded flex justify-center items-center"
+                        @click="removeCoupon"
+                    >
+                        <TrashIcon class="w-6 h-6 text-red-500" />
+                    </button>
+
+                    <span class="absolute top-1/2 -translate-y-1/2 left-3">
+                        <CheckCircleIcon
+                            class="w-6 h-6 text-green-500"
+                            v-if="hasCoupon"
+                        />
+                    </span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Place Order / Complete Payment Button -->
+        <button
+            class="px-6 py-4 w-full mt-4 bg-primary rounded-[10px] text-white text-base font-medium"
+            @click="hasPendingPayment ? resumePayment() : processOrderConfirm()"
+        >
+            {{ hasPendingPayment ? $t('Complete Payment') : $t('Place Order') }}
+        </button>
+
+        <!-- Unified Payment Modal -->
+        <UnifiedPaymentModal
+            :show="showPaymentProcessingModal"
+            :state="paymentProcessingState"
+            :payment-method="paymentMethod"
+            :message="paymentFailureMessage"
+            :countdown="redirectCountdown"
+            :show-countdown="paymentProcessingState === 'failed'"
+            :show-close-button="paymentMethod === 'COD' || paymentMethod === 'BANK'"
+            @close="showPaymentProcessingModal = false"
+            @cancel="cancelPaymentProcess"
+            @continue="handleContinueShopping"
+            @retry="retryPayment"
+            @view-order="viewOrder"
+            @reopen-window="reopenPaymentWindow"
+        />
+
+        <!-- Payment Status Modal -->
+        <PaymentStatusModal
+            :show="showPaymentStatusModal"
+            :status="paymentModalStatus"
+            :title="paymentModalTitle"
+            :message="paymentModalMessage"
+            :showContinueButton="paymentModalShowContinue"
+            :showCancelButton="paymentModalShowCancel"
+            @continue="handleContinuePayment"
+            @cancel="handleCancelPayment"
+            @close="showPaymentStatusModal = false"
+        />
+
+        <!-- End Order Confirm Dialog Modal -->
+        <OrderConfirmModal />
+    </div>
+</template>
+
+<script setup>
+import { ArrowRightIcon, TrashIcon } from "@heroicons/vue/24/outline";
+import { CheckCircleIcon } from "@heroicons/vue/24/solid";
+import { onMounted, ref, onBeforeUnmount, watch, computed } from "vue";
+import OrderConfirmModal from "../components/OrderConfirmModal.vue";
+import PaymentStatusModal from "../components/PaymentStatusModal.vue";
+import ToastSuccessMessage from "../components/ToastSuccessMessage.vue";
+import UnifiedPaymentModal from "../components/UnifiedPaymentModal.vue";
+
+import { useToast } from "vue-toastification";
+import { useAuth } from "../stores/AuthStore";
+import { useBasketStore } from "../stores/BasketStore";
+import { useMaster } from "../stores/MasterStore";
+import { inject } from "vue";
+import { useRouter } from "vue-router";
+import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios';
+
+const router = new useRouter();
+const paymentType = inject('paymentType');
+const paymentMethod = inject('paymentMethod');
+const proofUploaded = inject('proofUploaded');
+const uploadedProof = inject('uploadedProof');
+console.log('paymentType:', paymentType.value);
+const basketStore = useBasketStore();
+const master = useMaster();
+const authStore = useAuth();
+
+const toast = useToast();
+
+const hasCoupon = ref(false);
+
+const coupon = ref("");
+
+const weightUnit = ref('KG');
+
+const props = defineProps({
+    note: String,
+});
+
+// Payment status modal
+const showPaymentStatusModal = ref(false);
+const paymentModalStatus = ref('pending');
+const paymentModalTitle = ref('Payment Status');
+const paymentModalMessage = ref('');
+const paymentModalShowContinue = ref(false);
+const paymentModalShowCancel = ref(false);
+
+// Payment processing modal
+const showPaymentProcessingModal = ref(false);
+const paymentWindow = ref(null);
+const paymentProcessingState = ref('processing'); // 'processing' or 'failed'
+const paymentFailureMessage = ref('');
+const redirectCountdown = ref(10);
+const redirectTimer = ref(null);
+
+// Track payment state
+const stripe = ref(null);
+const sessionId = ref('');
+const orderId = ref(null);
+const paymentStarted = ref(false);
+const paymentInProgress = ref(false);
+const hasPendingPayment = ref(false);
+const pendingPaymentDetails = ref(null);
+const paymentFailed = ref(false);
+const paymentUrl = ref('');
+
+// Close Stripe iframe and check payment status
+const closeStripeIframe = () => {
+    showStripeIframe.value = false;
+    stripePaymentUrl.value = '';
+
+    if (orderId.value) {
+        // Check payment status after closing iframe
+        checkPaymentStatus(orderId.value);
+    }
+};
+
+// Watch for iframe message events
+onMounted(() => {
+    window.addEventListener('message', handleIframeMessage);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('message', handleIframeMessage);
+});
+
+// Handle messages from the Stripe iframe
+const handleIframeMessage = (event) => {
+    // Check if the message is from Stripe
+    if (event.data && event.data.type === 'stripe-payment-complete') {
+        // Close iframe and check payment status
+        showStripeIframe.value = false;
+        checkPaymentStatus(orderId.value);
+    }
+};
+
+// Watch for navigation events
+const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && paymentInProgress.value) {
+        // User returned to the page after starting payment
+        paymentInProgress.value = false;
+
+        if (orderId.value) {
+            // Check payment status
+            checkPaymentStatus(orderId.value);
+        }
+    }
+};
+
+// Check payment status with the server
+const checkPaymentStatus = async (orderIdToCheck) => {
+    try {
+        const response = await axios.get(`/check-payment-status/${orderIdToCheck}`);
+
+        if (response.data.status === 'paid') {
+            // Payment was successful, redirect to success page
+            router.push({ name: 'payment-success', query: { order_id: orderIdToCheck } });
+        } else if (response.data.status === 'pending') {
+            // Payment still pending, show modal asking what to do
+            showPaymentStatusModal.value = true;
+            paymentModalStatus.value = 'pending';
+            paymentModalTitle.value = `Payment Pending for Order #${orderIdToCheck}`;
+            paymentModalMessage.value = 'Your payment is still being processed. Would you like to continue with the payment or try a different method?';
+            paymentModalShowContinue.value = true;
+            paymentModalShowCancel.value = true;
+
+            // Store pending payment details
+            hasPendingPayment.value = true;
+            pendingPaymentDetails.value = {
+                orderId: orderIdToCheck,
+                stripeKey: response.data.stripe_key
+            };
+
+            // Also show a toast notification
+            toast.info(`Payment for Order #${orderIdToCheck} is still pending. You can continue the payment or try a different method.`, {
+                position: "bottom-left",
+                timeout: 8000,
+                closeButton: true
+            });
+        } else if (response.data.status === 'failed' || response.data.status === 'abandoned') {
+            // Payment failed, show modal with retry option
+            showPaymentStatusModal.value = true;
+            paymentModalStatus.value = 'error';
+            paymentModalTitle.value = `Payment Failed for Order #${orderIdToCheck}`;
+            paymentModalMessage.value = 'Your payment was not completed. You can try again with the same or a different payment method.';
+            paymentModalShowContinue.value = true;
+            paymentModalShowCancel.value = false;
+
+            // Store order ID for retry
+            orderId.value = orderIdToCheck;
+            paymentFailed.value = true;
+
+            // Reset payment method selection to allow user to choose again
+            paymentMethod.value = null;
+            paymentType.value = null;
+
+            // Also show a toast notification
+            toast.error(`Payment for Order #${orderIdToCheck} failed. You can try again with the same or a different payment method.`, {
+                position: "bottom-left",
+                timeout: 8000,
+                closeButton: true
+            });
+        } else {
+            // Other status, show generic message
+            toast.error(`Payment for Order #${orderIdToCheck} was not completed. Status: ${response.data.status}`);
+        }
+    } catch (error) {
+        console.error('Error checking payment status:', error);
+        toast.error('Could not verify payment status');
+    }
+};
+
+// Handle continue payment from modal - updated for popup window
+const handleContinuePayment = async () => {
+    if (paymentFailed.value) {
+        // If payment failed, close modal and let user select payment method again
+        showPaymentStatusModal.value = false;
+        paymentFailed.value = false;
+
+        // Scroll to payment methods section
+        const paymentMethodsSection = document.querySelector('#payment-methods-section');
+        if (paymentMethodsSection) {
+            paymentMethodsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Show message to select payment method
+        toast.info('Please select a payment method to continue');
+
+    } else if (pendingPaymentDetails.value) {
+        // For pending payments, refresh the session and open in popup
+        try {
+            const response = await axios.post('/refresh-payment-session', {
+                order_id: pendingPaymentDetails.value.orderId
+            });
+
+            if (response.data.status === 'success') {
+                sessionId.value = response.data.sessionId;
+                orderId.value = pendingPaymentDetails.value.orderId;
+
+                // Get payment URL
+                const paymentUrlFromResponse = response.data.payment_url || `https://checkout.stripe.com/pay/${response.data.sessionId}`;
+                paymentUrl.value = paymentUrlFromResponse;
+
+                // Show payment processing modal
+                showPaymentProcessingModal.value = true;
+
+                // Open payment in a new window
+                paymentWindow.value = window.open(paymentUrlFromResponse, 'stripe_checkout', 'width=600,height=600');
+
+                // Check if window was blocked
+                if (!paymentWindow.value || paymentWindow.value.closed) {
+                    toast.error('Payment window was blocked by your browser. Please allow popups for this site.');
+                    showPaymentProcessingModal.value = false;
+                    return;
+                }
+
+                // Start checking payment status
+                startPaymentStatusCheck(pendingPaymentDetails.value.orderId);
+            } else {
+                throw new Error(response.data.message || 'Failed to refresh payment session');
+            }
+        } catch (error) {
+            console.error('Error refreshing payment session:', error);
+            toast.error('Could not continue payment. Please try again.');
+        } finally {
+            showPaymentStatusModal.value = false;
+        }
+    }
+};
+
+// Handle cancel payment from modal
+const handleCancelPayment = async () => {
+    if (pendingPaymentDetails.value) {
+        try {
+            await axios.post('/abandoned-payment', {
+                order_id: pendingPaymentDetails.value.orderId
+            });
+
+            // Clear pending payment data
+            localStorage.removeItem('pendingPaymentOrderId');
+            hasPendingPayment.value = false;
+            pendingPaymentDetails.value = null;
+
+            toast.info('Payment has been cancelled');
+
+            // Reset payment method selection
+            paymentMethod.value = null;
+            paymentType.value = null;
+
+        } catch (error) {
+            console.error('Error cancelling payment:', error);
+        } finally {
+            showPaymentStatusModal.value = false;
+        }
+    }
+};
+
+// Resume payment for pending orders
+const resumePayment = async () => {
+    if (pendingPaymentDetails.value) {
+        // If payment method is selected, use it for the pending order
+        if (paymentMethod.value) {
+            try {
+                // Update the payment method for the pending order
+                await axios.post('/update-payment-method', {
+                    order_id: pendingPaymentDetails.value.orderId,
+                    payment_method: paymentMethod.value,
+                    payment_type: paymentType.value
+                });
+
+                // If new method is Stripe, refresh session and redirect
+                if (paymentMethod.value === 'stripe') {
+                    const response = await axios.post('/refresh-payment-session', {
+                        order_id: pendingPaymentDetails.value.orderId
+                    });
+
+                    if (response.data.status === 'success') {
+                        sessionId.value = response.data.sessionId;
+                        await redirectToStripe(response.data.apiKey);
+                    } else {
+                        throw new Error(response.data.message || 'Failed to refresh payment session');
+                    }
+                } else {
+                    // For other payment methods, show confirmation
+                    basketStore.showOrderConfirmModal = true;
+
+                    // Clear pending payment data
+                    localStorage.removeItem('pendingPaymentOrderId');
+                    hasPendingPayment.value = false;
+                    pendingPaymentDetails.value = null;
+                }
+            } catch (error) {
+                console.error('Error updating payment method:', error);
+                toast.error('Could not update payment method. Please try again.');
+            }
+        } else {
+            // No payment method selected, show message
+            toast.warning('Please select a payment method first');
+
+            // Scroll to payment methods section
+            const paymentMethodsSection = document.querySelector('#payment-methods-section');
+            if (paymentMethodsSection) {
+                paymentMethodsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }
+};
+
+onMounted(() => {
+    console.log("This is basketStore ", basketStore);
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    coupon.value = basketStore.coupon_code;
+
+    // Fetch weight unit from backend
+    try {
+        axios.get('/weight-unit').then(response => {
+            weightUnit.value = response.data.unit;
+        });
+    } catch (error) {
+        console.error('Error fetching weight unit:', error);
+    }
+
+    // Fetch checkout data with delivery charge
+    fetchCheckout();
+});
+
+const ApplyCoupon = () => {
+    if (coupon.value.length > 0) {
+        fetchCouponApply();
+    }
+};
+
+const removeCoupon = () => {
+    coupon.value = "";
+    hasCoupon.value = false;
+    basketStore.coupon_code = "";
+    fetchCouponApply();
+};
+
+const content = {
+    component: ToastSuccessMessage,
+    props: {
+        title: 'Order Placed',
+        message: 'Your order has been placed successfully.',
+    },
+};
+
+onBeforeUnmount(() => {
+    // Remove visibility change listener
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    // Check if payment was started but not completed
+    if (paymentStarted.value && orderId.value) {
+        axios.post('/abandoned-payment', { order_id: orderId.value })
+            .catch(error => console.error('Failed to mark payment as abandoned:', error));
+    }
+});
+
+// Cancel the payment process
+const cancelPaymentProcess = async () => {
+    // Close the payment window if it's open
+    if (paymentWindow.value && !paymentWindow.value.closed) {
+        paymentWindow.value.close();
+    }
+
+    // Hide the processing modal
+    showPaymentProcessingModal.value = false;
+
+    // Reset payment processing state
+    paymentProcessingState.value = 'processing';
+
+    // Clear redirect timer if it exists
+    if (redirectTimer.value) {
+        clearInterval(redirectTimer.value);
+    }
+
+    // Mark payment as abandoned if we have an order ID
+    if (orderId.value) {
+        try {
+            await axios.post('/abandoned-payment', { order_id: orderId.value });
+            toast.info('Payment has been cancelled');
+        } catch (error) {
+            console.error('Error cancelling payment:', error);
+        }
+    }
+
+    // Reset payment state
+    paymentStarted.value = false;
+    paymentInProgress.value = false;
+};
+
+// Reopen the payment window
+const reopenPaymentWindow = () => {
+    if (paymentUrl.value) {
+        // Close existing window if it's still open
+        if (paymentWindow.value && !paymentWindow.value.closed) {
+            paymentWindow.value.close();
+        }
+
+        // Open a new window with the payment URL
+        paymentWindow.value = window.open(paymentUrl.value, 'stripe_checkout', 'width=600,height=600');
+
+        // Check if window was blocked
+        if (!paymentWindow.value || paymentWindow.value.closed) {
+            toast.error('Payment window was blocked by your browser. Please allow popups for this site.');
+        }
+    }
+};
+
+// Check payment status periodically
+const startPaymentStatusCheck = (orderIdToCheck) => {
+    const checkInterval = setInterval(async () => {
+        try {
+            // Check if payment window is still open
+            if (paymentWindow.value && paymentWindow.value.closed) {
+                // Window was closed, check payment status one final time
+                await checkPaymentStatus(orderIdToCheck);
+                clearInterval(checkInterval);
+
+                // Don't hide the modal here, as we might want to show failure state
+                // showPaymentProcessingModal.value = false;
+            }
+
+            // Check payment status
+            const response = await axios.get(`/check-payment-status/${orderIdToCheck}`);
+            console.log('Payment status response:', response.data);
+
+            // Parse the response based on the new structure
+            const paymentStatus = response.data.data?.status?.toLowerCase();
+            const orderStatus = response.data.data?.order_status?.toLowerCase();
+
+            if (paymentStatus === 'paid' || orderStatus === 'confirm') {
+                // Payment successful, clear interval and redirect
+                clearInterval(checkInterval);
+                showPaymentProcessingModal.value = false;
+
+                // Close payment window if it's still open
+                if (paymentWindow.value && !paymentWindow.value.closed) {
+                    paymentWindow.value.close();
+                }
+
+                // Store the order details for reference
+                const orderDetails = response.data.data?.order_details;
+                if (orderDetails) {
+                    localStorage.setItem('lastOrderDetails', JSON.stringify(orderDetails));
+                }
+
+                // Redirect to success page
+                router.push({ name: 'payment-success', query: { order_id: orderIdToCheck } });
+            } else if (paymentStatus === 'failed' || paymentStatus === 'abandoned' || orderStatus === 'cancelled') {
+                // Payment failed, clear interval and show error in the same modal
+                clearInterval(checkInterval);
+
+                // Close payment window if it's still open
+                if (paymentWindow.value && !paymentWindow.value.closed) {
+                    paymentWindow.value.close();
+                }
+
+                // Update modal to show failure state
+                paymentProcessingState.value = 'failed';
+                paymentFailureMessage.value = `Payment for Order #${orderIdToCheck} was not completed. You can try again or go to the home page.`;
+
+                // Start countdown for redirection
+                startRedirectCountdown();
+
+                // Store order ID for retry
+                orderId.value = orderIdToCheck;
+                paymentFailed.value = true;
+
+                // Reset payment method selection
+                paymentMethod.value = null;
+                paymentType.value = null;
+            }
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+        }
+    }, 3000); // Check every 3 seconds
+
+    // Store the interval ID to clear it when component is unmounted
+    paymentStatusCheckInterval.value = checkInterval;
+};
+
+// Store the interval ID
+const paymentStatusCheckInterval = ref(null);
+
+// Go to home page
+const goToHomePage = () => {
+    if (redirectTimer.value) {
+        clearInterval(redirectTimer.value);
+    }
+    router.push({ name: 'home' });
+};
+
+// Retry payment
+const retryPayment = () => {
+    // Reset payment processing state
+    paymentProcessingState.value = 'processing';
+
+    // Clear redirect timer if it exists
+    if (redirectTimer.value) {
+        clearInterval(redirectTimer.value);
+    }
+
+    // Reopen payment window
+    reopenPaymentWindow();
+};
+
+// Handle continue shopping action
+const handleContinueShopping = () => {
+    // Clear basket if needed
+    if (basketStore.items.length > 0) {
+        basketStore.clearBasket();
+    }
+
+    // Close the modal
+    showPaymentProcessingModal.value = false;
+
+    // Redirect to home page
+    router.push({ name: 'home' });
+};
+
+// View order details
+const viewOrder = () => {
+    // Close the modal
+    showPaymentProcessingModal.value = false;
+
+    // Redirect to order history page
+    router.push({ name: 'order-history' });
+};
+
+// Start countdown for redirection
+const startRedirectCountdown = () => {
+    // Clear any existing timer
+    if (redirectTimer.value) {
+        clearInterval(redirectTimer.value);
+    }
+
+    // Reset countdown
+    redirectCountdown.value = 10;
+
+    // Start countdown
+    redirectTimer.value = setInterval(() => {
+        redirectCountdown.value--;
+
+        if (redirectCountdown.value <= 0) {
+            clearInterval(redirectTimer.value);
+            goToHomePage();
+        }
+    }, 1000);
+};
+
+const redirectToStripe = async (apiKey) => {
+    console.log('Stripe API Key:', apiKey);
+    try {
+        paymentStarted.value = true;
+        paymentInProgress.value = true;
+
+        // Create the checkout session URL
+        const checkoutUrl = `https://checkout.stripe.com/pay/${sessionId.value}`;
+        paymentUrl.value = checkoutUrl;
+
+        // Store order ID in localStorage for recovery
+        localStorage.setItem('pendingPaymentOrderId', orderId.value);
+
+        window.location.href = checkoutUrl;
+
+        // Show payment processing modal
+        /*  showPaymentProcessingModal.value = true;
+          
+          // Open payment in a new window
+          paymentWindow.value = window.open(checkoutUrl, 'stripe_checkout', 'width=600,height=600');
+          
+          // Check if window was blocked
+          if (!paymentWindow.value || paymentWindow.value.closed) {
+              toast.error('Payment window was blocked by your browser. Please allow popups for this site.');
+              showPaymentProcessingModal.value = false;
+              return;
+          }
+
+        // Start checking payment status
+        startPaymentStatusCheck(orderId.value);*/
+
+    } catch (error) {
+        console.error('Stripe initialization error:', error);
+        toast.error(`Payment initialization failed for Order #${orderId.value}. Please try again or contact support.`, {
+            position: "bottom-left",
+            timeout: 6000,
+            closeButton: true
+        });
+
+        paymentStarted.value = false;
+        paymentInProgress.value = false;
+        showPaymentProcessingModal.value = false;
+    }
+};
+
+const processOrderConfirm = async () => {
+    try {
+        // Check if we have a pending address but no saved address
+        if (!basketStore.address && basketStore.pendingAddress) {
+            // Save the pending address first
+            await saveAndUseAddress(basketStore.pendingAddress);
+        }
+
+        // Validate required fields
+        if (!basketStore.address) {
+            toast.error('Please select a shipping address', {
+                position: "bottom-left",
+            });
+            return;
+        }
+
+        if (!paymentMethod.value) {
+            toast.error('Please select a payment method', {
+                position: "bottom-left",
+            });
+            return;
+        }
+
+        if (paymentType.value === 'bank' && !proofUploaded.value) {
+            toast.error('Please upload payment proof', {
+                position: "bottom-left",
+            });
+            return;
+        }
+
+        // Log the payable amount to verify it includes shipping
+        console.log('Placing order with payable amount:', basketStore.payable_amount);
+        console.log('Delivery charge:', basketStore.delivery_charge);
+        console.log('Total amount:', basketStore.total_amount);
+        console.log('Coupon discount:', basketStore.coupon_discount);
+        console.log('selected products:', basketStore.selectedProducts);
+
+        const formData = new FormData();
+        formData.append('address_id', basketStore.address.id);
+        formData.append('payment_method', paymentMethod.value);
+
+        // Set payment type correctly for Stripe
+        if (paymentMethod.value === 'card') {
+            formData.append('payment_type', 'card');
+        } else {
+            formData.append('payment_type', paymentType.value);
+        }
+
+        formData.append('note', props.note);
+        formData.append('coupon_code', basketStore.coupon_code);
+        basketStore.selectedShopIds.forEach((id) => formData.append('shop_ids[]', id));
+
+
+        console.log('Placing order with address ID: ', basketStore);
+        // Add shop IDs
+        formData.append('shop_ids[]', basketStore.selectedShopIds);
+
+
+        // Add selected products to the request
+        basketStore.selectedProducts.forEach((id) => formData.append('selected_products[]', id));
+
+        // Add delivery charge and payable amount to ensure they're stored correctly
+        formData.append('delivery_charge', basketStore.delivery_charge);
+        formData.append('payable_amount', basketStore.payable_amount);
+
+        if (uploadedProof.value) {
+            formData.append('payment_proof', uploadedProof.value);
+        }
+
+        const response = await axios.post('/place-order', formData, {
+            headers: {
+                Authorization: authStore.token,
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        console.log('responseOrder', response.data);
+        console.log('responseOrder', response.data.data);
+
+        // Handle successful order placement
+        basketStore.checkoutProducts = [];
+        basketStore.selectedShopIds = [];
+        basketStore.coupon_code = '';
+        basketStore.total_amount = 0;
+        basketStore.delivery_charge = 0;
+        basketStore.coupon_discount = 0;
+        basketStore.payable_amount = 0;
+
+        basketStore.fetchCart();
+
+        if (response.data.data.order_payment_url) {
+            console.log('Order payment URL response:', response.data.data.order_payment_url);
+
+            // Check the structure of the response
+            if (response.data.data.order_payment_url.original &&
+                response.data.data.order_payment_url.original.data) {
+
+                // Access the correct path to the payment data
+                const orderPaymentData = response.data.data.order_payment_url.original.data;
+                console.log('Order Payment Data:', orderPaymentData);
+
+                if (orderPaymentData.order_payment_url) {
+                    sessionId.value = orderPaymentData.session_id;
+                    orderId.value = orderPaymentData.orderId;
+
+                    // Store order ID in localStorage for recovery
+                    localStorage.setItem('pendingPaymentOrderId', orderPaymentData.orderId);
+
+                    window.location.href = orderPaymentData.order_payment_url;
+                    // Set payment URL
+                    //  paymentUrl.value = orderPaymentData.order_payment_url;
+
+                    // Show payment processing modal
+                    /*      showPaymentProcessingModal.value = true;
+      
+                          // Open payment in a new window
+                          paymentWindow.value = window.open(orderPaymentData.order_payment_url, 'stripe_checkout', 'width=600,height=600');
+      
+                          // Check if window was blocked
+                          if (!paymentWindow.value || paymentWindow.value.closed) {
+                              toast.error('Payment window was blocked by your browser. Please allow popups for this site.');
+                              showPaymentProcessingModal.value = false;
+                              return;
+                          }
+      
+                          // Start checking payment status
+                          startPaymentStatusCheck(orderPaymentData.orderId);*/
+                }
+            } else {
+                console.error('Unexpected response structure:', response.data.data.order_payment_url);
+                toast.error('Error processing payment. Please try again or contact support.');
+            }
+        } else {
+            // For cash on delivery or bank transfer payments
+            // Store the order ID if available
+            if (response.data.data && response.data.data.order_id) {
+                orderId.value = response.data.data.order_id;
+                localStorage.setItem('lastOrderId', response.data.data.order_id);
+            }
+
+            // Show the payment processing modal with success state
+            showPaymentProcessingModal.value = true;
+            paymentProcessingState.value = 'success';
+
+            // Show success message
+            toast.success('Order placed successfully!', {
+                position: "bottom-left",
+            });
+        }
+
+    } catch (error) {
+        console.error('Order placement failed:', error);
+        const errorMessage = error.response?.data?.errors
+            ? Object.values(error.response.data.errors)[0][0]
+            : error.response?.data?.message || 'Order placement failed';
+        toast.error(errorMessage);
+    }
+};
+
+const fetchCouponApply = () => {
+    axios.post("/cart/checkout",
+        {
+            shop_ids: basketStore.selectedShopIds,
+            coupon_code: coupon.value,
+            selected_products: basketStore.selectedProducts
+        },
+        {
+            headers: {
+                Authorization: authStore.token,
+            },
+        }).then((response) => {
+            hasCoupon.value = response.data.data.apply_coupon;
+
+            // If we have selected products, use the selectedProductsTotal
+            if (basketStore.selectedProducts.length > 0) {
+                basketStore.total_amount = parseFloat(basketStore.selectedProductsTotal);
+            } else {
+                basketStore.total_amount = response.data.data.checkout.total_amount;
+            }
+
+            basketStore.delivery_charge = response.data.data.checkout.delivery_charge;
+            basketStore.coupon_discount = response.data.data.checkout.coupon_discount;
+            basketStore.payable_amount = response.data.data.checkout.payable_amount;
+
+            if (hasCoupon.value) {
+                toast.success(response.data.message, {
+                    position: "bottom-left",
+                });
+                basketStore.coupon_code = coupon.value;
+            } else {
+                toast.error(response.data.message, {
+                    position: "bottom-left",
+                });
+                basketStore.coupon_code = '';
+            }
+        })
+        .catch((error) => {
+            toast.error(error.response.data.message, {
+                position: "bottom-left",
+            });
+        });
+};
+
+
+// Save and use address function
+const saveAndUseAddress = async (addressData) => {
+    try {
+        // Ensure we have the required fields
+        if ((!addressData.name && !addressData.company_name) || !addressData.phone || !addressData.area || !addressData.post_code || !addressData.address_line) {
+            console.error('Missing required address fields');
+            return false;
+        }
+
+        // Prepare the address data
+        const addressPayload = { ...addressData };
+
+        // Set as default address
+        addressPayload.is_default = true;
+
+        // Set country if not present
+        if (!addressPayload.country) {
+            addressPayload.country = 'Romania';
+        }
+
+        // Send the request to save the address
+        const response = await axios.post('/address/store', addressPayload, {
+            headers: {
+                Authorization: authStore.token
+            },
+        });
+
+        // If successful, update the address in the store
+        if (response.data && response.data.data && response.data.data.address) {
+            const newAddress = response.data.data.address;
+
+            // Add to addresses list
+            authStore.addresses.push(newAddress);
+
+            // Set as current address
+            basketStore.address = newAddress;
+
+            // Clear pending address
+            basketStore.pendingAddress = null;
+
+            console.log('Address saved and set as current:', newAddress);
+            return true;
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Failed to save address:', error);
+        return false;
+    }
+};
+
+const calculateTotalWeight = () => {
+    let totalWeight = 0;
+    basketStore.checkoutProducts.forEach(shop => {
+        shop.products.forEach(product => {
+            // If product has size, use size as weight
+            if (product.size) {
+                totalWeight += (parseFloat(product.size.name) || 0) * product.quantity;
+            }
+        });
+    });
+    return totalWeight;
+};
+
+const fetchCheckout = async () => {
+    try {
+        const totalWeight = calculateTotalWeight();
+
+        const response = await axios.post("/cart/checkout", {
+            shop_ids: basketStore.selectedShopIds,
+            coupon_code: coupon.value,
+            total_weight: totalWeight,
+            selected_products: basketStore.selectedProducts
+        }, {
+            headers: {
+                Authorization: authStore.token,
+            },
+        });
+
+        // Update basket store with checkout data
+        if (response.data.data) {
+            const checkoutData = response.data.data.checkout;
+
+            // If we have selected products, use the selectedProductsTotal
+            if (basketStore.selectedProducts.length > 0) {
+                basketStore.total_amount = parseFloat(basketStore.selectedProductsTotal);
+            } else {
+                basketStore.total_amount = checkoutData.total_amount;
+            }
+
+            basketStore.delivery_charge = checkoutData.delivery_charge;
+            basketStore.coupon_discount = checkoutData.coupon_discount;
+            basketStore.payable_amount = checkoutData.payable_amount;
+            basketStore.order_tax_amount = checkoutData.order_tax_amount || 0;
+
+            // Update weight unit if provided
+            if (response.data.data.weight_unit) {
+                weightUnit.value = response.data.data.weight_unit;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching checkout data:', error);
+    }
+};
+
+</script>
+
+<style scoped>
+.formInputCoupon {
+    @apply rounded-lg border border-slate-200 focus:border-primary w-full outline-none text-base font-normal leading-normal placeholder:text-slate-400;
+}
+
+.delivery-option {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+.delivery-option:hover {
+    @apply transform scale-[1.01];
+}
+</style>
