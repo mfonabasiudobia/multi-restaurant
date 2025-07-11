@@ -284,10 +284,10 @@ const loginFormData = ref({
 });
 
 onMounted(async () => {
-    if (master.app_environment == 'local') {
-        loginFormData.value.phone = 'user@readyecommerce.com';
-        loginFormData.value.password = 'secret';
-    }
+    // if (master.app_environment == 'local') {
+    //     loginFormData.value.phone = 'user@readyecommerce.com';
+    //     loginFormData.value.password = 'secret';
+    // }
 
     await fetchCountries();
 
