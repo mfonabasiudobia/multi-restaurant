@@ -268,7 +268,7 @@ class ProductController extends Controller
         try {
             Log::info('Advanced Filter request params:', $request->all());
 
-            $query = Product::query()->with(['videos', 'categories', 'subCategories']);
+            $query = Product::latest()->with(['videos', 'categories', 'subCategories']);
 
             // Parse filters from request
             $filters = json_decode($request->input('filters', '{}'), true);
@@ -279,11 +279,11 @@ class ProductController extends Controller
 
                 $query->where(function ($q) use ($request) {
                     $q->where('name', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%');
+                        ->orWhere('description', 'like', '%' . $request->search . '%');
                 });
             }
 
-      
+
 
             // Apply category_id filter ONLY if the Categories filter is empty or not provided
             // This allows "All" selection to show all products without category restriction
@@ -397,7 +397,7 @@ class ProductController extends Controller
                 'bindings' => $query->getBindings()
             ]);
 
-         
+
 
             $products = $query->paginate($perPage);
 
@@ -445,7 +445,7 @@ class ProductController extends Controller
 
                 $query->where(function ($q) use ($request) {
                     $q->where('name', 'like', '' . $request->search . '');
-                      //  ->orWhere('description', 'like', '%' . $request->search . '%');
+                    //  ->orWhere('description', 'like', '%' . $request->search . '%');
                 });
             }
 
