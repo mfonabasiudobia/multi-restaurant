@@ -18,7 +18,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 {{-- Display Validation Errors --}}
 @if ($errors->any())
 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong><i class="fa fa-exclamation-triangle me-2"></i>{{ __('There were some problems with your input:') }}</strong>
+    <strong><i class="fa fa-exclamation-triangle me-2"></i>{{ __('There were some problems with your input:')
+        }}</strong>
     <ul class="mb-0 mt-2">
         @foreach ($errors->all() as $error)
         <li>{{ $error }}</li>
@@ -28,7 +29,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 </div>
 @endif
 
-<form action="{{ route('admin.product.update', $product->id) }}" method="POST" enctype="multipart/form-data" id="product_loader_form">
+<form action="{{ route('admin.product.update', $product->id) }}" method="POST" enctype="multipart/form-data"
+    id="product_loader_form">
     {{-- CSRF Token --}}
     @csrf
     @method('PUT')
@@ -66,8 +68,7 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 
             <div class="col-md-12 mt-4">
                 <label for="shortDescription" class="form-label">{{ __('Short Description') }}</label>
-                <textarea class="form-control @error('shortDescription') is-invalid @enderror"
-                    id="shortDescription"
+                <textarea class="form-control @error('shortDescription') is-invalid @enderror" id="shortDescription"
                     name="shortDescription"
                     rows="3">{{ old('shortDescription', $product->short_description) }}</textarea>
                 @error('shortDescription')
@@ -77,10 +78,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 
             <div class="col-md-12 mt-4">
                 <label for="description" class="form-label">{{ __('Description') }}</label>
-                <textarea class="form-control @error('description') is-invalid @enderror"
-                    id="description"
-                    name="description"
-                    rows="5">{{ old('description', $product->description) }}</textarea>
+                <textarea class="form-control @error('description') is-invalid @enderror" id="description"
+                    name="description" rows="5">{{ old('description', $product->description) }}</textarea>
                 @error('description')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -101,7 +100,9 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="bag_number">{{ __('Bag Number') }}</label>
-                        <input type="text" name="bag_number" id="bag_number" class="form-control @error('bag_number') is-invalid @enderror" value="{{ old('bag_number', $product->bag_number) }}">
+                        <input type="text" name="bag_number" id="bag_number"
+                            class="form-control @error('bag_number') is-invalid @enderror"
+                            value="{{ old('bag_number', $product->bag_number) }}">
                         @error('bag_number')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -110,7 +111,9 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="location">{{ __('Location (Box)') }}</label>
-                        <input type="text" name="location" id="location" class="form-control @error('location') is-invalid @enderror" value="{{ old('location', $product->location) }}">
+                        <input type="text" name="location" id="location"
+                            class="form-control @error('location') is-invalid @enderror"
+                            value="{{ old('location', $product->location) }}">
                         @error('location')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -119,7 +122,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="row">{{ __('Row') }}</label>
-                        <input type="number" name="row" id="row" class="form-control @error('row') is-invalid @enderror" value="{{ old('row', $product->row) }}">
+                        <input type="number" name="row" id="row" class="form-control @error('row') is-invalid @enderror"
+                            value="{{ old('row', $product->row) }}">
                         @error('row')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -176,8 +180,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                             {{ __('Select Category') }}
                         </option>
                         @foreach ($categories as $category)
-                        <option value="{{ $category->id }}"
-                            {{ in_array($category->id, $product->categories?->pluck('id')->toArray()) ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}" {{ in_array($category->id,
+                            $product->categories?->pluck('id')->toArray()) ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                         @endforeach
@@ -194,8 +198,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                     <select name="sub_category[]" class="form-control select2" multiple style="width: 100%"
                         data-placeholder="Select Sub Category">
                         @foreach ($subCategories as $subCategory)
-                        <option value="{{ $subCategory->id }}"
-                            {{ in_array($subCategory->id, $product->subcategories?->pluck('id')->toArray()) ? 'selected' : '' }}>
+                        <option value="{{ $subCategory->id }}" {{ in_array($subCategory->id,
+                            $product->subcategories?->pluck('id')->toArray()) ? 'selected' : '' }}>
                             {{ $subCategory->name }}
                         </option>
                         @endforeach
@@ -210,7 +214,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                         {{ __('Season') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="season_id" id="season_id" class="form-select select2 @error('season_id') is-invalid @enderror" required>
+                    <select name="season_id" id="season_id"
+                        class="form-select select2 @error('season_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Season') }}</option>
                         @foreach($seasons as $season)
                         <option value="{{ $season->id }}" {{ $product->season_id == $season->id ? 'selected' : '' }}>
@@ -228,7 +233,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                         {{ __('Quality') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="quality_id" id="quality_id" class="form-select select2 @error('quality_id') is-invalid @enderror" required>
+                    <select name="quality_id" id="quality_id"
+                        class="form-select select2 @error('quality_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Quality') }}</option>
                         @foreach($qualities as $quality)
                         <option value="{{ $quality->id }}" {{ $product->quality_id == $quality->id ? 'selected' : '' }}>
@@ -246,7 +252,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                         {{ __('Select Unit') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="unit_id" id="unit_id" class="form-select select2 @error('unit_id') is-invalid @enderror" required>
+                    <select name="unit_id" id="unit_id"
+                        class="form-select select2 @error('unit_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Unit') }}</option>
                         @foreach($units as $unit)
                         <option value="{{ $unit->id }}" {{ $unit->id == $product->unit_id ? 'selected' : '' }}>
@@ -267,9 +274,7 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                         $existingSize = $product->sizes->find($size->id);
                         $existingPrice = $existingSize ? $existingSize->pivot->price : 0;
                         @endphp
-                        <option value="{{ $size->id }}"
-                            data-size="{{ $size->name }}"
-                            data-price="{{ $existingPrice }}"
+                        <option value="{{ $size->id }}" data-size="{{ $size->name }}" data-price="{{ $existingPrice }}"
                             {{ $product->sizes->contains($size->id) ? 'selected' : '' }}>
                             {{ $size->name }}
                         </option>
@@ -293,29 +298,31 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
             </div>
             <div class="row mt-3">
                 {{-- <div class="col-lg-3 col-md-6">
-                        <x-input type="text" name="buy_price" label="Buying Price" placeholder="Buying Price"
-                            required="true" onlyNumber="true" :value="$product->buy_price" />
-                    </div> --}}
+                    <x-input type="text" name="buy_price" label="Buying Price" placeholder="Buying Price"
+                        required="true" onlyNumber="true" :value="$product->buy_price" />
+                </div> --}}
 
                 <div class="col-lg-3 col-md-6">
-                    <x-input type="text" name="price" label="Selling Price" placeholder="Selling Price"
-                        required="true" onlyNumber="true" :value="$product->price" />
+                    <x-input type="text" name="price" label="Selling Price" placeholder="Selling Price" required="true"
+                        onlyNumber="true" :value="$product->price" />
                 </div>
 
                 <div class="col-lg-3 col-md-6 mt-3 mt-md-0">
-                    <x-input type="text" name="discount_price" label="Discount Price"
-                        placeholder="Discount Price" onlyNumber="true" :value="$product->discount_price" />
+                    <x-input type="text" name="discount_price" label="Discount Price" placeholder="Discount Price"
+                        onlyNumber="true" :value="$product->discount_price" />
                 </div>
 
                 <div class="col-lg-3 col-md-6 mt-3 mt-lg-0">
                     <x-input type="text" name="quantity" label="Current Stock Quantity"
-                        placeholder="Current Stock Quantity" onlyNumber="true" required="true" :value="$product->quantity" />
+                        placeholder="Current Stock Quantity" onlyNumber="true" required="true"
+                        :value="$product->quantity" />
                 </div>
 
                 <div class="col-md-6 mt-3">
                     <x-select name="taxs[]" label="Vat & Tax" placeholder="Select Vat & Tax" multiselect="true">
                         @foreach ($taxs as $tax)
-                        <option value="{{ $tax->id }}" {{ in_array($tax->id, $product->vatTaxes?->pluck('id')->toArray()) ? 'selected' : '' }}>
+                        <option value="{{ $tax->id }}" {{ in_array($tax->id,
+                            $product->vatTaxes?->pluck('id')->toArray()) ? 'selected' : '' }}>
                             {{ $tax->name }} ({{ $tax->percentage }}%)
                         </option>
                         @endforeach
@@ -323,8 +330,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                 </div>
 
                 <div class="col-lg-3 col-md-6 mt-3">
-                    <x-input type="text" onlyNumber="true" name="min_order_quantity"
-                        label="Minimum Order Quantity" placeholder="Minimum Order Quantity" :value="$product->min_order_quantity" />
+                    <x-input type="text" onlyNumber="true" name="min_order_quantity" label="Minimum Order Quantity"
+                        placeholder="Minimum Order Quantity" :value="$product->min_order_quantity" />
                 </div>
             </div>
 
@@ -348,12 +355,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                                     <input type="hidden" name="size[{{ $size->id }}][id]" value="{{ $size->id }}">
                                 </td>
                                 <td>
-                                    <input type="number"
-                                        class="form-control"
-                                        name="size[{{ $size->id }}][price]"
-                                        value="{{ $size->pivot->price }}"
-                                        min="0"
-                                        step="0.01">
+                                    <input type="number" class="form-control" name="size[{{ $size->id }}][price]"
+                                        value="{{ $size->pivot->price }}" min="0" step="0.01">
                                 </td>
                             </tr>
                             @endforeach
@@ -364,9 +367,9 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
         </div>
     </div>
     {{--
-        <!--######## Thumbnail Information ##########-->
-        <div class="row mb-3">
-            <!-- <div class="col-md-5 col-xl-3">
+    <!--######## Thumbnail Information ##########-->
+    <div class="row mb-3">
+        <!-- <div class="col-md-5 col-xl-3">
                 <div class="card card-body h-100">
                     <div class="mb-2">
                         <h5>
@@ -387,10 +390,10 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
     </div>
     </div> -->
 
-    <div class="col-md-7 col-xl-9 mt-3 mt-md-0">
-        <div class="card h-100">
-            <div class="card-body">
-                <!-- <div class="mb-2">
+        <div class="col-md-7 col-xl-9 mt-3 mt-md-0">
+            <div class="card h-100">
+                <div class="card-body">
+                    <!-- <div class="mb-2">
                             <h5>
                                 {{ __(' Thumbnail') }}
                                 <span class="text-primary">(Ratio 1:1 (500 x 500 px))</span> *
@@ -400,54 +403,53 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                             @enderror
                         </div> -->
 
-                <div class="d-flex flex-wrap gap-3" id="additionalElements">
+                    <div class="d-flex flex-wrap gap-3" id="additionalElements">
 
-                    <!-- previous additional thumbnail -->
-                    @foreach ($product->medias as $media)
-                    @php
-                    $source = asset('default/upload.png');
-                    if (Storage::exists($media->src)) {
-                    $source = Storage::url($media->src);
-                    }
-                    @endphp
+                        <!-- previous additional thumbnail -->
+                        @foreach ($product->medias as $media)
+                        @php
+                        $source = asset('default/upload.png');
+                        if (Storage::exists($media->src)) {
+                        $source = Storage::url($media->src);
+                        }
+                        @endphp
 
-                    <div id="additionShow">
-                        <label for="previousThumbnailShow{{ $media->id }}" class="additionThumbnail">
-                            <img src="{{ $source }}" id="previewShow{{ $media->id }}"
-                                alt="thumbnail" width="100%" height="100%">
-                            <a href="{{ route('admin.product.remove.thumbnail', ['product' => $product->id, 'media' => $media->id]) }}"
-                                class="delete btn btn-sm btn-outline-danger">
-                                <i class="fa fa-trash"></i>
-                            </a>
-                        </label>
-                        <input type="hidden" name="previousThumbnail[{{ $loop->index }}][id]"
-                            value="{{ $media->id }}">
-                        <input id="previousThumbnailShow{{ $media->id }}" accept="image/*" type="file"
-                            name="previousThumbnail[{{ $loop->index }}][file]" class="d-none"
-                            onchange="previewFile(event, 'previewShow{{ $media->id }}')" />
+                        <div id="additionShow">
+                            <label for="previousThumbnailShow{{ $media->id }}" class="additionThumbnail">
+                                <img src="{{ $source }}" id="previewShow{{ $media->id }}" alt="thumbnail" width="100%"
+                                    height="100%">
+                                <a href="{{ route('admin.product.remove.thumbnail', ['product' => $product->id, 'media' => $media->id]) }}"
+                                    class="delete btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </label>
+                            <input type="hidden" name="previousThumbnail[{{ $loop->index }}][id]"
+                                value="{{ $media->id }}">
+                            <input id="previousThumbnailShow{{ $media->id }}" accept="image/*" type="file"
+                                name="previousThumbnail[{{ $loop->index }}][file]" class="d-none"
+                                onchange="previewFile(event, 'previewShow{{ $media->id }}')" />
+                        </div>
+                        @endforeach
+
+                        <!-- New additional thumbnail -->
+                        <div id="addition">
+                            <label for="additionThumbnail1" class="additionThumbnail">
+                                <img src="{{ asset('default/upload.png') }}" id="preview2" alt="" width="100%"
+                                    height="100%">
+                                <button onclick="removeThumbnail('addition')" id="removeThumbnail1" type="button"
+                                    class="delete btn btn-sm btn-outline-danger" style="display: none"><i
+                                        class="fa fa-trash"></i></button>
+                            </label>
+                            <input id="additionThumbnail1" accept="image/*" type="file" name="additionThumbnail[]"
+                                class="d-none" onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
+                        </div>
+
                     </div>
-                    @endforeach
 
-                    <!-- New additional thumbnail -->
-                    <div id="addition">
-                        <label for="additionThumbnail1" class="additionThumbnail">
-                            <img src="{{ asset('default/upload.png') }}" id="preview2" alt=""
-                                width="100%" height="100%">
-                            <button onclick="removeThumbnail('addition')" id="removeThumbnail1" type="button"
-                                class="delete btn btn-sm btn-outline-danger" style="display: none"><i
-                                    class="fa fa-trash"></i></button>
-                        </label>
-                        <input id="additionThumbnail1" accept="image/*" type="file"
-                            name="additionThumbnail[]" class="d-none"
-                            onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
-                    </div>
 
                 </div>
-
-
             </div>
         </div>
-    </div>
     </div> --}}
     <div class="card mt-4">
         <div class="card-body">
@@ -471,15 +473,15 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                 @if ($product->videos)
                 @foreach ($product->videos as $video)
                 <div id="video_{{ $video->id }}" class="mb-2 position-relative">
-                    <video width="320" height="240" controls>
-                        <source src="{{ Storage::disk('s3')->url($video->src) }}" type="{{ $video->type }}">
+                    <video width="320" height="240" controls id="my-video" data-setup="{}"
+                        class="video-js vjs-default-skin" controls preload="auto">
+                        <source type="application/x-mpegURL" src="{{ Storage::disk('s3')->url($video->src) }}"
+                            type="{{ $video->type }}">
                         Your browser does not support the video tag.
                     </video>
                     @if($video->thumbnail)
-                    <img src="{{ Storage::disk('s3')->url($video->thumbnail) }}"
-                        class="video-poster"
-                        alt="{{ $video->title }}"
-                        width="320" height="240">
+                    <img src="{{ Storage::disk('s3')->url($video->thumbnail) }}" class="video-poster"
+                        alt="{{ $video->title }}" width="320" height="240">
                     @endif
                     <a href="{{ route('admin.product.remove-videos', ['video' => $video->id]) }}"
                         class="delete btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2">
@@ -522,8 +524,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 
                         <div id="additionShow">
                             <label for="previousThumbnailShow{{ $media->id }}" class="additionThumbnail">
-                                <img src="{{ $source }}" id="previewShow{{ $media->id }}"
-                                    alt="thumbnail" width="100%" height="100%">
+                                <img src="{{ $source }}" id="previewShow{{ $media->id }}" alt="thumbnail" width="100%"
+                                    height="100%">
                                 <a href="{{ route('shop.product.remove.thumbnail', ['product' => $product->id, 'media' => $media->id]) }}"
                                     class="delete btn btn-sm btn-outline-danger">
                                     <i class="fa fa-trash"></i>
@@ -540,15 +542,14 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
                         <!-- New additional thumbnail -->
                         <div id="addition">
                             <label for="additionThumbnail1" class="additionThumbnail">
-                                <img src="{{ asset('default/upload.png') }}" id="preview2" alt=""
-                                    width="100%" height="100%">
+                                <img src="{{ asset('default/upload.png') }}" id="preview2" alt="" width="100%"
+                                    height="100%">
                                 <button onclick="removeThumbnail('addition')" id="removeThumbnail1" type="button"
                                     class="delete btn btn-sm btn-outline-danger" style="display: none"><i
                                         class="fa fa-trash"></i></button>
                             </label>
-                            <input id="additionThumbnail1" accept="image/*" type="file"
-                                name="additionThumbnail[]" class="d-none"
-                                onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
+                            <input id="additionThumbnail1" accept="image/*" type="file" name="additionThumbnail[]"
+                                class="d-none" onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
                         </div>
 
                     </div>
@@ -609,7 +610,8 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 
 @push('scripts')
 <!-- TinyMCE -->
-<script src="https://cdn.tiny.cloud/1/404ticmbmer7eyfwwt48gxb8isw74kc374o8ae3p06vqow2v/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.tiny.cloud/1/404ticmbmer7eyfwwt48gxb8isw74kc374o8ae3p06vqow2v/tinymce/7/tinymce.min.js"
+    referrerpolicy="origin"></script>
 <!-- additional thumbnail script -->
 <script>
     var thumbnailCount = 1;
@@ -759,14 +761,46 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
             console.error('jQuery or Select2 is not loaded');
         }
 
-        jQuery('#product_loader_form').submit(function() {
-            if (jQuery(this)[0].checkValidity()) {
-                showLoading();
+        // jQuery('#product_loader_form').submit(function(e) {
+        //     if (this.checkValidity()) {
+        //         e.preventDefault(); // Temporarily block submission
+        //         showLoading();
 
+        //         // Delay the actual submission slightly to allow Swal to show
+        //        requestAnimationFrame(() => {
+        //             setTimeout(() => {
+        //                 this.submit(); // Manually submit
+        //             }, 500); // Adjust delay if needed
+        //         });
+        //     }
+        // });
+
+        jQuery('#product_loader_form').on('submit', function(e) {
+            if (this.checkValidity()) {
+                e.preventDefault();
+                const form = this;
+                const formData = new FormData(form);
+                showLoading(); // Start counter
+
+                // Submit form via fetch (AJAX)
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.text()) // or .json() if API returns JSON
+                .then(data => {
+                    Swal.close(); // Close after complete
+                    // Optional: Redirect or show success
+                   window.location.href = "/admin/products"; 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire("Error", "Something went wrong", "error");
+                });
             }
-
-
         });
+
+
     });
 
     function initializeExistingSizes() {
@@ -835,26 +869,61 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
     }
 
     function showLoading() {
-        let counter = 0;
+         let counter = 0;
+
+        //    const interval = setInterval(() => {
+        //                 counter += 1;
+
+        //                  Swal.update({
+        //                     text: `${counter}% video transcoding progress`
+        //                 });
+
+        //                 if (counter >= 100) {
+        //                     clearInterval(interval);
+        //                     Swal.close();
+        //                 }
+        //             }, 500);
 
         Swal.fire({
             icon: "info",
             title: "Progress",
             text: `${counter}% video transcoding progress`,
             showCancelButton: false,
-            showConfirmButton: false
-        });
+            showConfirmButton: false,
+             didOpen: () => {
+               
+                const interval = setInterval(() => {
+                    counter += 1;
 
-        const interval = setInterval(function() {
-            counter += 1;
-            $('.swal2-html-container').text(`${counter}% video transcoding progress`);
-            if (counter >= 100) {
-                clearInterval(interval);
+                    Swal.update({
+                        text: `${counter}% video transcoding progress`
+                    });
+
+                    if (counter >= 99) {
+                        clearInterval(interval);
+                    }
+                }, 1000); // Adjust speed here
             }
-        }, 500);
-
-
+        }); 
     }
+</script>
+
+<script src="https://vjs.zencdn.net/8.5.2/video.min.js"></script>
+<script src="https://unpkg.com/videojs-http-source-selector/dist/videojs-http-source-selector.js"></script>
+<script>
+    const player = videojs('my-video', {
+        controls: true,
+        autoplay: false,
+        preload: 'auto',
+      });
+
+      player.httpSourceSelector({
+        default: 'auto'
+      });
+
+      player.ready(function () {
+        player.controlBar.addChild('QualitySelector');
+      });
 </script>
 
 @endpush

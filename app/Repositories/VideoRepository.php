@@ -3,8 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\Video;
+use App\Models\Product;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg as LaravelFFMpeg;
 use FFMpeg;
 
 class VideoRepository extends Repository
@@ -26,43 +28,99 @@ class VideoRepository extends Repository
      * @param int $productId
      * @return Video
      */
+    // public static function storeVideo(UploadedFile $file, int $productId): Video
+    // {
+
+    //     #error_reporting(E_ALL);
+    //     # ini_set('display_errors', '1');
+
+    //     // Set higher time limit for video processing (10 minutes)
+    //     set_time_limit(600);
+    //     ini_set('max_execution_time', '600');
+
+
+    //     // $tempPath = $tempPath . $filename;
+    //     try {
+    //         // Create a safer temporary file path
+    //         $filename = uniqid('video_', true) . '.mp4';
+    //         $tempDir = storage_path('app');
+    //         $tempPath = $tempDir . '/' . $filename;
+
+    //         // Ensure temp directory exists
+    //         if (!file_exists(dirname($tempPath))) {
+    //             mkdir(dirname($tempPath), 0755, true);
+    //         }
+
+    //         $file->move($tempDir, $filename); // this moves the actual uploaded file
+
+    //         // Upload to S3
+    //         $localFile = new \Illuminate\Http\File($tempPath);
+
+    //         // Upload to S3
+    //         $videoPath = Storage::disk('s3')->putFileAs(
+    //             'videos/products/' . $productId,
+    //             $localFile,
+    //             $filename
+    //         );
+
+    //         // Clean up
+    //         // if (file_exists($tempPath)) {
+    //         //     unlink($tempPath);
+    //         // }
+    //         \Log::info('Video uploaded to S3: ' . $videoPath);
+
+    //         // 2. Stream just the first few seconds from S3 to generate thumbnail
+    //         $thumbnailPath = self::generateThumbnailFromS3($videoPath, $productId);
+
+    //         // 3. Create and return the video record
+    //         return self::create([
+    //             'product_id' => $productId,
+    //             'src' => $videoPath,
+    //             'thumbnail' => $thumbnailPath,
+    //             'type' => "video/mp4", // Assuming MP4 for simplicity, adjust as needed
+    //             'title' => $filename,
+    //             'size' => $localFile->getSize()
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         dd($e->getMessage());
+    //         // If something fails, cleanup any uploaded files
+    //         if (isset($videoPath) && Storage::disk('s3')->exists($videoPath)) {
+    //             Storage::disk('s3')->delete($videoPath);
+    //         }
+    //         if (isset($thumbnailPath) && Storage::disk('s3')->exists($thumbnailPath)) {
+    //             Storage::disk('s3')->delete($thumbnailPath);
+    //         }
+    //         \Log::error('Failed to store video: ' . $e->getMessage());
+    //         throw $e;
+    //     }
+    // }
+
+
     public static function storeVideo(UploadedFile $file, int $productId): Video
     {
-
-        #error_reporting(E_ALL);
-        # ini_set('display_errors', '1');
-
-        // Set higher time limit for video processing (10 minutes)
         set_time_limit(600);
         ini_set('max_execution_time', '600');
 
-
-        // $tempPath = $tempPath . $filename;
-
-
-
         try {
-
-
-            // Create a safer temporary file path
+            // Step 1: Save file temporarily
             $filename = uniqid('video_', true) . '.mp4';
-            $tempPath = storage_path('app/') . $filename;
+            $tempDir = storage_path('app/temp');
+            $tempPath = $tempDir . '/' . $filename;
 
-            // Ensure temp directory exists
-            if (!file_exists(dirname($tempPath))) {
-                mkdir(dirname($tempPath), 0755, true);
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
             }
 
+            $file->move($tempDir, $filename);
+            $localFile = new \Illuminate\Http\File($tempPath);
 
+            // Step 2: Generate HLS renditions (adaptive)
+            $outputDirName = pathinfo($filename, PATHINFO_FILENAME);
+            $hlsTempPath = storage_path("app/hls/{$outputDirName}");
 
-            \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::open($file)
-                ->export()
-                ->toDisk('local')
-                ->inFormat(new FFMpeg\Format\Video\X264)
-                ->addFilter(['-an'])
-                ->save($filename);
-
-            // Upload to S3
+            if (!file_exists($hlsTempPath)) {
+                mkdir($hlsTempPath, 0755, true);
+            }
 
             $videoPath = Storage::disk('s3')->putFileAs(
                 'videos/products/' . $productId,
@@ -70,39 +128,74 @@ class VideoRepository extends Repository
                 $filename
             );
 
+            $lowFormat = (new \FFMpeg\Format\Video\X264)
+                ->setKiloBitrate(400)
+                ->setAdditionalParameters(['-an']); // 400 kbps, no audio
+
+            $mediumFormat = (new \FFMpeg\Format\Video\X264)
+                ->setKiloBitrate(1000)
+                ->setAdditionalParameters(['-an']); // 1000 kbps, no audio
+
+            $highFormat = (new \FFMpeg\Format\Video\X264)
+                ->setKiloBitrate(1500)
+                ->setAdditionalParameters(['-an']); // 1500 kbps, no audio
+
+
+            LaravelFFMpeg::fromDisk('local')
+                ->open("temp/{$filename}")
+                ->exportForHLS()
+                ->addFormat($lowFormat)
+                ->addFormat($mediumFormat)
+                ->addFormat($highFormat)
+                ->toDisk('local')
+                ->save("hls/{$outputDirName}/master.m3u8");
+
+            \Log::info("HLS adaptive export complete: hls/{$outputDirName}/master.m3u8");
+
+            // Step 3: Upload to S3
+            $localHlsPath = storage_path("app/hls/{$outputDirName}");
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($localHlsPath),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($files as $fileInfo) {
+                if (!$fileInfo->isFile()) continue;
+
+                $filePath = $fileInfo->getPathname();
+                $keyName = "videos/products/{$productId}/hls/{$outputDirName}/" . $fileInfo->getFilename();
+                Storage::disk('s3')->put($keyName, file_get_contents($filePath));
+            }
+
+            $hlsMasterPlaylist = "videos/products/{$productId}/hls/{$outputDirName}/master.m3u8";
+
+            // Step 4: Generate thumbnail
+            $thumbnailPath = self::generateThumbnailFromS3($videoPath, $productId);
+
+            // Step 5: Return video record
+            return self::create([
+                'product_id' => $productId,
+                'src' => $hlsMasterPlaylist,
+                'thumbnail' => $thumbnailPath,
+                'type' => "application/x-mpegURL",
+                'title' => $filename,
+                'size' => $localFile->getSize()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to store video: ' . $e->getMessage());
+            throw $e;
+        } finally {
             // Clean up
             if (file_exists($tempPath)) {
                 unlink($tempPath);
             }
 
-
-
-            \Log::info('Video uploaded to S3: ' . $videoPath);
-
-            // 2. Stream just the first few seconds from S3 to generate thumbnail
-            $thumbnailPath = self::generateThumbnailFromS3($videoPath, $productId);
-
-            // 3. Create and return the video record
-            return self::create([
-                'product_id' => $productId,
-                'src' => $videoPath,
-                'thumbnail' => $thumbnailPath,
-                'type' => "video/mp4", // Assuming MP4 for simplicity, adjust as needed
-                'title' => $file->getClientOriginalName(),
-                'size' => $file->getSize()
-            ]);
-        } catch (\Exception $e) {
-            // If something fails, cleanup any uploaded files
-            if (isset($videoPath) && Storage::disk('s3')->exists($videoPath)) {
-                Storage::disk('s3')->delete($videoPath);
+            if (isset($hlsTempPath)) {
+                \File::deleteDirectory($hlsTempPath);
             }
-            if (isset($thumbnailPath) && Storage::disk('s3')->exists($thumbnailPath)) {
-                Storage::disk('s3')->delete($thumbnailPath);
-            }
-            \Log::error('Failed to store video: ' . $e->getMessage());
-            throw $e;
         }
     }
+
 
     /**
      * Generate a thumbnail from a video stored in S3 by streaming a small segment.

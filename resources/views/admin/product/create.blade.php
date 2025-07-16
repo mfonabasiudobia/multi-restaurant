@@ -9,7 +9,8 @@
 {{-- Display Validation Errors --}}
 @if ($errors->any())
 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong><i class="fa fa-exclamation-triangle me-2"></i>{{ __('There were some problems with your input:') }}</strong>
+    <strong><i class="fa fa-exclamation-triangle me-2"></i>{{ __('There were some problems with your input:')
+        }}</strong>
     <ul class="mb-0 mt-2">
         @foreach ($errors->all() as $error)
         <li>{{ $error }}</li>
@@ -32,7 +33,7 @@
                 <select name="shop_id" class="form-control select2" style="width: 100%">
                     <option value="">{{ __('Select Shop') }}</option>
                     @foreach ($shops as $shop)
-                    <option value="{{ $shop->id }}" {{ old('shop_id') == $shop->id ? 'selected' : '' }}>
+                    <option value="{{ $shop->id }}" {{ old('shop_id')==$shop->id ? 'selected' : '' }}>
                         {{ $shop->name }}
                     </option>
                     @endforeach
@@ -55,7 +56,8 @@
 
             <div class="form-group">
                 <label for="shortDescription">{{ __('Short Description') }}</label>
-                <textarea name="shortDescription" id="shortDescription" class="form-control">{{ old('shortDescription') }}</textarea>
+                <textarea name="shortDescription" id="shortDescription"
+                    class="form-control">{{ old('shortDescription') }}</textarea>
             </div>
 
             <div class="form-group">
@@ -78,7 +80,9 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="bag_number">{{ __('Bag Number') }}</label>
-                        <input type="text" name="bag_number" id="bag_number" class="form-control @error('bag_number') is-invalid @enderror" value="{{ old('bag_number') }}">
+                        <input type="text" name="bag_number" id="bag_number"
+                            class="form-control @error('bag_number') is-invalid @enderror"
+                            value="{{ old('bag_number') }}">
                         @error('bag_number')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -87,7 +91,8 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="location">{{ __('Location (Box)') }}</label>
-                        <input type="text" name="location" id="location" class="form-control @error('location') is-invalid @enderror" value="{{ old('location') }}">
+                        <input type="text" name="location" id="location"
+                            class="form-control @error('location') is-invalid @enderror" value="{{ old('location') }}">
                         @error('location')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -96,7 +101,8 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label for="row">{{ __('Row') }}</label>
-                        <input type="number" name="row" id="row" class="form-control @error('row') is-invalid @enderror" value="{{ old('row') }}">
+                        <input type="number" name="row" id="row" class="form-control @error('row') is-invalid @enderror"
+                            value="{{ old('row') }}">
                         @error('row')
                         <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -124,7 +130,8 @@
 
                 <div class="col-md-4">
                     <label class="form-label">{{ __('Select Sub Categories') }}</label>
-                    <select name="sub_category[]" data-placeholder="Select Sub Category" class="form-control select2" multiple style="width: 100%">
+                    <select name="sub_category[]" data-placeholder="Select Sub Category" class="form-control select2"
+                        multiple style="width: 100%">
                         <option value="" disabled>{{ __('Select Sub Category') }}</option>
                     </select>
                     @error('sub_category')
@@ -140,10 +147,11 @@
                         {{ __('Season') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="season_id" id="season_id" class="form-select select2 @error('season_id') is-invalid @enderror" required>
+                    <select name="season_id" id="season_id"
+                        class="form-select select2 @error('season_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Season') }}</option>
                         @foreach($seasons as $season)
-                        <option value="{{ $season->id }}" {{ old('season_id') == $season->id ? 'selected' : '' }}>
+                        <option value="{{ $season->id }}" {{ old('season_id')==$season->id ? 'selected' : '' }}>
                             {{ $season->name }}
                         </option>
                         @endforeach
@@ -158,10 +166,11 @@
                         {{ __('Quality') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="quality_id" id="quality_id" class="form-select select2 @error('quality_id') is-invalid @enderror" required>
+                    <select name="quality_id" id="quality_id"
+                        class="form-select select2 @error('quality_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Quality') }}</option>
                         @foreach($qualities as $quality)
-                        <option value="{{ $quality->id }}" {{ old('quality_id') == $quality->id ? 'selected' : '' }}>
+                        <option value="{{ $quality->id }}" {{ old('quality_id')==$quality->id ? 'selected' : '' }}>
                             {{ $quality->name }}
                         </option>
                         @endforeach
@@ -176,10 +185,11 @@
                         {{ __('Unit') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="unit_id" id="unit_id" class="form-select select2 @error('unit_id') is-invalid @enderror" required>
+                    <select name="unit_id" id="unit_id"
+                        class="form-select select2 @error('unit_id') is-invalid @enderror" required>
                         <option value="">{{ __('Select Unit') }}</option>
                         @foreach($units as $unit)
-                        <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
+                        <option value="{{ $unit->id }}" {{ old('unit_id')==$unit->id ? 'selected' : '' }}>
                             {{ $unit->name }}
                         </option>
                         @endforeach
@@ -197,10 +207,12 @@
                         {{ __('Select Size') }}
                         <span class="text-danger">*</span>
                     </label>
-                    <select name="sizeIds[]" id="size" data-placeholder="Select Size" class="form-select select2" multiple style="width: 100%" required>
+                    <select name="sizeIds[]" id="size" data-placeholder="Select Size" class="form-select select2"
+                        multiple style="width: 100%" required>
                         <option value="">{{ __('Select Size') }}</option>
                         @foreach ($sizes as $size)
-                        <option value="{{ $size->id }}" data-size="{{ $size->name }}" {{ (old('sizeIds') && in_array($size->id, old('sizeIds'))) ? 'selected' : '' }}>
+                        <option value="{{ $size->id }}" data-size="{{ $size->name }}" {{ (old('sizeIds') &&
+                            in_array($size->id, old('sizeIds'))) ? 'selected' : '' }}>
                             {{ $size->name }}
                         </option>
                         @endforeach
@@ -217,7 +229,8 @@
                                 {{ __('Product SKU') }}
                                 <span class="text-danger">*</span>
                             </span>
-                            <span class="info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ __('Create a unique product code. This will be used generate barcode') }}">
+                            <span class="info" data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-title="{{ __('Create a unique product code. This will be used generate barcode') }}">
                                 <i class="bi bi-info"></i>
                             </span>
                         </div>
@@ -225,7 +238,9 @@
                             {{ __('Generate Code') }}
                         </span>
                     </label>
-                    <input type="text" id="barcode" name="code" placeholder="Ex: 134543" class="form-control" value="{{ old('code') }}" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" />
+                    <input type="text" id="barcode" name="code" placeholder="Ex: 134543" class="form-control"
+                        value="{{ old('code') }}"
+                        oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" />
                     @error('code')
                     <p class="text text-danger m-0">{{ $message }}</p>
                     @enderror
@@ -245,13 +260,13 @@
             </div>
             <div class="row mt-3">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-input type="text" name="price" label="Selling Price" placeholder="Selling Price"
-                        required="true" onlyNumber="true" value="10" />
+                    <x-input type="text" name="price" label="Selling Price" placeholder="Selling Price" required="true"
+                        onlyNumber="true" value="10" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-input type="text" name="discount_price" label="Discount Price"
-                        placeholder="Discount Price" onlyNumber="true" value="0" />
+                    <x-input type="text" name="discount_price" label="Discount Price" placeholder="Discount Price"
+                        onlyNumber="true" value="0" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
@@ -268,8 +283,8 @@
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-input type="text" onlyNumber="true" name="min_order_quantity"
-                        label="Minimum Order Quantity" placeholder="Minimum Order Quantity" value="1" />
+                    <x-input type="text" onlyNumber="true" name="min_order_quantity" label="Minimum Order Quantity"
+                        placeholder="Minimum Order Quantity" value="1" />
                 </div>
             </div>
 
@@ -328,15 +343,14 @@
                     <div class="d-flex flex-wrap gap-3" id="additionalElements">
                         <div id="addition">
                             <label for="additionThumbnail1" class="additionThumbnail">
-                                <img src="https://placehold.co/500x500/f1f5f9/png" id="preview2" alt=""
-                                    width="100%" height="100%">
+                                <img src="https://placehold.co/500x500/f1f5f9/png" id="preview2" alt="" width="100%"
+                                    height="100%">
                                 <button onclick="removeThumbnail('addition')" id="removeThumbnail1" type="button"
                                     class="delete btn btn-sm btn-outline-danger" style="display: none"><i
                                         class="fa fa-trash"></i></button>
                             </label>
-                            <input id="additionThumbnail1" accept="image/*" type="file"
-                                name="additionThumbnail[]" class="d-none"
-                                onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
+                            <input id="additionThumbnail1" accept="image/*" type="file" name="additionThumbnail[]"
+                                class="d-none" onchange="previewAdditionalFile(event, 'preview2', 'removeThumbnail1')">
                         </div>
                     </div>
                 </div>
@@ -795,7 +809,8 @@
 </script>
 
 <!-- TinyMCE -->
-<script src="https://cdn.tiny.cloud/1/404ticmbmer7eyfwwt48gxb8isw74kc374o8ae3p06vqow2v/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.tiny.cloud/1/404ticmbmer7eyfwwt48gxb8isw74kc374o8ae3p06vqow2v/tinymce/7/tinymce.min.js"
+    referrerpolicy="origin"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize TinyMCE
@@ -844,11 +859,31 @@
             });
         }
 
-        jQuery('#product_loader_form').submit(function() {
-            if (jQuery(this)[0].checkValidity()) {
-                showLoading();
+         jQuery('#product_loader_form').on('submit', function(e) {
+            if (this.checkValidity()) {
+                e.preventDefault();
+                const form = this;
+                const formData = new FormData(form);
+                showLoading(); // Start counter
+
+                // Submit form via fetch (AJAX)
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.text()) // or .json() if API returns JSON
+                .then(data => {
+                    Swal.close(); // Close after complete
+                    // Optional: Redirect or show success
+                   window.location.href = "/admin/products"; 
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire("Error", "Something went wrong", "error");
+                });
             }
         });
+        
     });
 
     // Format color options with color preview
@@ -898,27 +933,30 @@
         document.getElementById('barcode').value = Math.floor(Math.random() * 900000) + 100000;
     }
 
-
-    function showLoading() {
+     function showLoading() {
         let counter = 0;
 
         Swal.fire({
             icon: "info",
             title: "Progress",
-            text: `${counter}% video transcoding progress`,
+            text: `0% video transcoding progress`,
             showCancelButton: false,
             showConfirmButton: false
         });
 
         const interval = setInterval(function() {
             counter += 1;
-            $('.swal2-html-container').text(`${counter}% video transcoding progress`);
+            // $('.swal2-html-container').text(`${counter}% video transcoding progress`);
+
+             Swal.update({
+                text: `${counter}% video transcoding progress`
+            });
+
             if (counter >= 100) {
                 clearInterval(interval);
+                Swal.close(); 
             }
         }, 500);
-
-
     }
 </script>
 @endpush
