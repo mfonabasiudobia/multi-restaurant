@@ -259,7 +259,7 @@
                         </button>
 
                         <!-- Buy Now -->
-                        <button @click="buyNow"
+                        <button @click="buyNow2"
                             class="flex-1 py-3 bg-primary text-white rounded font-medium hover:bg-primary/90 transition-colors">
                             {{ $t("BUY NOW") }}
                         </button>
@@ -491,6 +491,16 @@ const addToCart = () => {
         findProductInCart(route.params.id);
     }, 500);
 };
+
+const buyNow2 = () => {
+    basketStore.addToCart(formData.value, product.value);
+    setTimeout(() => {
+        findProductInCart(route.params.id);
+
+         window.location = '/checkout';
+    }, 500);
+
+}
 
 const decrementQty = () => {
     basketStore.decrementQuantity(product.value);

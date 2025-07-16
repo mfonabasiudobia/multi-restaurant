@@ -96,7 +96,7 @@
 
                     <button
                         class="justify-center items-center gap-0.5 flex border border-primary grow py-2.5 rounded-[10px]"
-                        @click="openBuyNowOptions">
+                        @click="openBuyNowOptions(props.product)">
                         <div class="text-primary text-sm font-normal leading-tight">{{ $t('Buy Now') }}</div>
                     </button>
                 </div>
@@ -198,13 +198,13 @@
                                 </div>
                             </div>
                             <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                <button 
+                                <!-- <button 
                                     type="button"
                                     class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 sm:ml-3 sm:w-auto"
                                     @click="proceedToBuyNow"
                                 >
                                     {{ $t('Buy Now') }}
-                                </button>
+                                </button> -->
                                 <button 
                                     type="button"
                                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
@@ -265,21 +265,26 @@ const addToBasket = (product) => {
     basketStore.addToCart(orderData, product);
 };
 
-const openBuyNowOptions = () => {
-    if (authStore.token === null) {
-        return authStore.loginModal = true;
-    }
+const openBuyNowOptions = (product) => {
+     basketStore.addToCart(orderData, product);
+
+     setTimeout(() => {
+        window.location = '/checkout';
+     }, 500)
+    // if (authStore.token === null) {
+    //     return authStore.loginModal = true;
+    // }
     
-    // If product has sizes, show the modal
-    if (props.product?.sizes && props.product.sizes.length > 0) {
-        // Reset selections
-        selectedSize.value = null;
-        quantity.value = 1;
-        showQuickBuyModal.value = true;
-    } else {
-        // If no sizes, proceed directly
-        buyNow();
-    }
+    // // If product has sizes, show the modal
+    // if (props.product?.sizes && props.product.sizes.length > 0) {
+    //     // Reset selections
+    //     selectedSize.value = null;
+    //     quantity.value = 1;
+    //     showQuickBuyModal.value = true;
+    // } else {
+    //     // If no sizes, proceed directly
+    //     buyNow();
+    // }
 };
 
 const selectSize = (size) => {

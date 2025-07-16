@@ -114,22 +114,27 @@ const addToBasket = (product) => {
     basketStore.addToCart(orderData, product);
 };
 
-const buyNow = () => {
-    if (authStore.token === null) {
-        return authStore.loginModal = true;
-    }
+const buyNow = (product) => {
+    basketStore.addToCart(orderData, product);
 
-    basketStore.addToCart({
-        product_id: props.product?.id,
-        is_buy_now: true,
-        quantity: 1,
-        size: null,
-        color: null,
-        unit: null
-    }, props.product);
+    setTimeout(() => {
+        window.location = '/checkout';
+     }, 500)
+    // if (authStore.token === null) {
+    //     return authStore.loginModal = true;
+    // }
 
-    basketStore.buyNowShopId = props.product?.shop.id;
-    router.push({ name: 'buynow' })
+    // basketStore.addToCart({
+    //     product_id: props.product?.id,
+    //     is_buy_now: true,
+    //     quantity: 1,
+    //     size: null,
+    //     color: null,
+    //     unit: null
+    // }, props.product);
+
+    // basketStore.buyNowShopId = props.product?.shop.id;
+    // router.push({ name: 'buynow' })
 };
 
 const showProductDetails = async () => {
