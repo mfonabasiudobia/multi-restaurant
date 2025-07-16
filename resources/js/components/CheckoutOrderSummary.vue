@@ -713,11 +713,12 @@ const retryPayment = () => {
 
 // Handle continue shopping action
 const handleContinueShopping = () => {
+   
     // Clear basket if needed
-    if (basketStore.items.length > 0) {
-        basketStore.clearBasket();
+    if (basketStore?.items?.length > 0) {
+        basketStore?.clearBasket();
     }
-
+ 
     // Close the modal
     showPaymentProcessingModal.value = false;
 
@@ -1056,12 +1057,15 @@ const saveAndUseAddress = async (addressData) => {
 };
 
 const calculateTotalWeight = () => {
+    return basketStore?.total_weight || 0;
     let totalWeight = 0;
+  
     basketStore.checkoutProducts.forEach(shop => {
         shop.products.forEach(product => {
             // If product has size, use size as weight
+          
             if (product.size) {
-                totalWeight += (parseFloat(product.size.name) || 0) * product.quantity;
+                totalWeight += (parseFloat(product.size) || 0) * product.quantity;
             }
         });
     });
@@ -1075,7 +1079,7 @@ const fetchCheckout = async () => {
         const response = await axios.post("/cart/checkout", {
             shop_ids: basketStore.selectedShopIds,
             coupon_code: coupon.value,
-            total_weight: totalWeight,
+            // total_weight: totalWeight,
             selected_products: basketStore.selectedProducts
         }, {
             headers: {
@@ -1086,7 +1090,7 @@ const fetchCheckout = async () => {
         // Update basket store with checkout data
         if (response.data.data) {
             const checkoutData = response.data.data.checkout;
-
+            
             // If we have selected products, use the selectedProductsTotal
             if (basketStore.selectedProducts.length > 0) {
                 basketStore.total_amount = parseFloat(basketStore.selectedProductsTotal);
@@ -1097,6 +1101,8 @@ const fetchCheckout = async () => {
             basketStore.delivery_charge = checkoutData.delivery_charge;
             basketStore.coupon_discount = checkoutData.coupon_discount;
             basketStore.payable_amount = checkoutData.payable_amount;
+          
+            basketStore.total_weight = response.data.data?.total_weight;
             basketStore.order_tax_amount = checkoutData.order_tax_amount || 0;
 
             // Update weight unit if provided
