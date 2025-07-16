@@ -45,7 +45,7 @@ class ProductRepository extends Repository
     {
         // Use the request object directly
         $data = $request->validated();
-        
+
         // Add null checks for description fields
         $data['description'] = $request->description ?? null;
         $data['shortDescription'] = $request->shortDescription ?? null;
@@ -69,6 +69,7 @@ class ProductRepository extends Repository
         if ($user->hasRole('root') || ($generaleSetting?->shop_type == 'single')) {
             $isAdmin = true;
         }
+
 
         $product = self::create([
             'shop_id' => $shop?->id,
@@ -131,7 +132,7 @@ class ProductRepository extends Repository
                 if (isset($request->size[$sizeId]['price'])) {
                     $sizePrice = $request->size[$sizeId]['price'];
                 }
-                
+
                 $product->sizes()->attach($sizeId, [
                     'price' => $sizePrice
                 ]);
@@ -150,9 +151,9 @@ class ProductRepository extends Repository
      */
     public static function updateByRequest(ProductRequest $request, Product $product): Product
     {
-		
+
         \Log::info('Update Product Request Data:', $request->all());
-        
+
         $thumbnail = $product->media;
         if ($request->hasFile('thumbnail') && $thumbnail) {
             $thumbnail = MediaRepository::updateByRequest(
@@ -168,7 +169,7 @@ class ProductRepository extends Repository
 
         $generaleSetting = generaleSetting('setting');
         $approve = $generaleSetting?->update_product_approval ? false : true;
-        
+
         /**
          * @var \App\Models\User $user
          */
@@ -207,7 +208,7 @@ class ProductRepository extends Repository
         }
 
         // Only filter out null values, keep empty strings and zeros
-        $updateData = array_filter($updateData, function($value) {
+        $updateData = array_filter($updateData, function ($value) {
             return !is_null($value);
         });
 
@@ -230,12 +231,10 @@ class ProductRepository extends Repository
         }
 
         // Handle videos
-        if ($request->hasFile('videos')) {
-			
-			
+        if ($request->has('videos')) {
             VideoRepository::storeMultipleVideos($request->file('videos'), $product->id);
         }
-    
+
         // Handle video removals
         if ($request->has('remove_videos')) {
             VideoRepository::deleteMultipleVideos($request->remove_videos, $product->id);
@@ -246,7 +245,7 @@ class ProductRepository extends Repository
         $product->subcategories()->sync($request->sub_category ?? []);
 
         // Handle sizes - First detach existing sizes
-        $product->sizes()->detach();
+        // $product->sizes()->detach();
 
         // Get size data from request
         $sizeIds = $request->input('sizeIds', []);
@@ -258,17 +257,32 @@ class ProductRepository extends Repository
             'sizeData' => $sizeData
         ]);
 
+
         // Attach new sizes with their prices
+        // foreach ($sizeIds as $sizeId) {
+        //     if (isset($sizeData[$sizeId])) {
+
+        //         $price = $sizeData[$sizeId]['price'] ?? 0;
+        //         try {
+        //             $product->sizes()->attach($sizeId, ['price' => $price]);
+        //             \Log::info("Attached size $sizeId with price $price");
+        //         } catch (\Exception $e) {
+        //             \Log::error("Error attaching size $sizeId: " . $e->getMessage());
+        //         }
+        //     }
+        // }
+
+        $syncData = [];
+
         foreach ($sizeIds as $sizeId) {
             if (isset($sizeData[$sizeId])) {
                 $price = $sizeData[$sizeId]['price'] ?? 0;
-                try {
-                    $product->sizes()->attach($sizeId, ['price' => $price]);
-                    \Log::info("Attached size $sizeId with price $price");
-                } catch (\Exception $e) {
-                    \Log::error("Error attaching size $sizeId: " . $e->getMessage());
-                }
+                $syncData[$sizeId] = ['price' => $price];
             }
+        }
+
+        if (count($syncData) > 0) {
+            $product->sizes()->sync($syncData);
         }
 
         // Sync VAT/taxes
@@ -291,7 +305,7 @@ class ProductRepository extends Repository
 
         $folders = $folders !== null ? array_keys($folders) : [];
 
-        $galleryPath = 'gallery/shop'.$shop->id;
+        $galleryPath = 'gallery/shop' . $shop->id;
 
         foreach ($rows as $row) {
 
@@ -309,8 +323,8 @@ class ProductRepository extends Repository
                     foreach ($explodeThumbnails as $thumbnail) {
                         $storeFile = null;
                         foreach ($folders as $folder) {
-                            if (Storage::disk('public')->exists($galleryPath.'/'.$folder)) {
-                                $files = File::files(Storage::disk('public')->path($galleryPath.'/'.$folder));
+                            if (Storage::disk('public')->exists($galleryPath . '/' . $folder)) {
+                                $files = File::files(Storage::disk('public')->path($galleryPath . '/' . $folder));
                                 foreach ($files as $file) {
                                     if (basename($file) == $thumbnail) {
                                         $storeFile = $file;
@@ -414,8 +428,8 @@ class ProductRepository extends Repository
         $additionalThumbnails = $data['thumbnails'] ? array_slice($data['thumbnails'], 1) : [];
         if (isset($data['videos']) && !empty($data['videos'])) {
             foreach ($data['videos'] as $video) {
-                if (Storage::disk('public')->exists($galleryPath.'/'.$video)) {
-                    $videoFile = Storage::disk('public')->get($galleryPath.'/'.$video);
+                if (Storage::disk('public')->exists($galleryPath . '/' . $video)) {
+                    $videoFile = Storage::disk('public')->get($galleryPath . '/' . $video);
                     VideoRepository::storeVideo($videoFile, $product->id);
                 }
             }
@@ -461,7 +475,7 @@ class ProductRepository extends Repository
 
             $path = 'thumbnails';
 
-            $fileName = random_int(100000, 999999).date('YmdHis').'.'.pathinfo($realPath, PATHINFO_EXTENSION);
+            $fileName = random_int(100000, 999999) . date('YmdHis') . '.' . pathinfo($realPath, PATHINFO_EXTENSION);
 
             $storagePath = Storage::disk('public')->putFileAs($path, $thumbnail, $fileName);
 
