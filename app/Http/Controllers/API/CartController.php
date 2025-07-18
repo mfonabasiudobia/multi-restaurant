@@ -233,13 +233,14 @@ class CartController extends Controller
         // If total weight is not provided in request, calculate it from cart items
         if (!$totalWeight) {
             $totalWeight = 0;
+
             foreach ($carts as $cart) {
                 // Get product weight from size
-                $productWeight = 0;
+                $productWeight = $cart->size;
 
                 // If product has size, use size as weight
                 if ($cart->size_id) {
-                    $size = $cart->product->sizes()->where('id', $cart->size_id)->first();
+                    $size = $cart->product->sizes()->where('name', $cart->size)->first();
                     if ($size) {
                         $productWeight = (float) $size->name;
                     }

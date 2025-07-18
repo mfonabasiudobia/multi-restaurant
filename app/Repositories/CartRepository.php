@@ -68,6 +68,7 @@ class CartRepository extends Repository
 
                 $size = $product->sizes()?->where('id', $cart->size)->first();
 
+
                 $sizePrice = $size?->pivot?->price ?? 0;
                 // $colorPrice = $color?->pivot?->price ?? 0;
                 $extraPrice = $sizePrice;
@@ -148,7 +149,8 @@ class CartRepository extends Repository
         if ($cart) {
             $cart->update([
                 'quantity' => $isBuyNow ? 1 : $cart->quantity + 1,
-                'size' => $request->size ?? $cart->size,
+                // 'size' => $request->size ?? $cart->size,
+                'size' => $product->sizes()->first()?->name ?? $size,
                 'unit' => $request->unit ?? $cart->unit,
             ]);
 
@@ -161,7 +163,7 @@ class CartRepository extends Repository
             'is_buy_now' => $isBuyNow,
             'customer_id' => $customer->id,
             'quantity' => $request->quantity ?? 1,
-            'size' => $size,
+            'size' => $product->sizes()->first()?->name ?? $size,
             'unit' => $unit,
         ]);
     }
@@ -177,6 +179,7 @@ class CartRepository extends Repository
         $couponDiscount = 0;
         $payableAmount = 0;
         $taxAmount = 0;
+        $totalSizeAmount = 0;
 
         $shopWiseTotalAmount = [];
         $totalOrderTaxAmount = 0;
@@ -209,7 +212,7 @@ class CartRepository extends Repository
                     }
                 }
 
-                $sizePrice = $product->sizes()?->where('id', $cart->size)->first()?->pivot?->price ?? 0;
+                $sizePrice =  $product->sizes()?->where('name', $cart->size)->first()?->pivot?->price ?? 0;
                 $price = $price + $sizePrice;
 
                 foreach ($product->vatTaxes ?? [] as $tax) {
@@ -233,6 +236,7 @@ class CartRepository extends Repository
                 }
 
                 $totalAmount += $price * $cart->quantity;
+                $totalSizeAmount += $sizePrice * $cart->quantity;
 
                 if ($cart->gift) {
                     $giftCharge += $cart->gift->price;
@@ -313,9 +317,10 @@ class CartRepository extends Repository
             'total_amount' => (float) round($totalAmount, 2),
             'delivery_charge' => (float) round($deliveryCharge, 2),
             'coupon_discount' => (float) round($couponDiscount, 2),
-            'order_tax_amount' => (float) round($totalOrderTaxAmount, 2),
+            'order_tax_amount' => (float)  round($totalOrderTaxAmount, 2),
             'payable_amount' => (float) round($payableAmount, 2),
             'gift_charge' => (float) round($giftCharge, 2),
+            'total_size_amount' => (float) round($totalSizeAmount, 2)
             // 'product_tax_amount' => (float) round($taxAmount, 2),
         ];
     }
