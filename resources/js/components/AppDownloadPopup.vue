@@ -7,7 +7,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      
+
       <div class="text-center">
         <div class="flex justify-center space-x-4 mb-3">
           <a v-if="appStoreLink" :href="appStoreLink" target="_blank">
@@ -58,8 +58,8 @@ const master = useMaster();
 const showPopup = ref(false);
 const isMobile = ref(false);
 
-const appStoreLink = master.appStoreLink??'https://apps.apple.com/app/id6469883602';
-const playStoreLink = master.playStoreLink??'https://play.google.com/store/apps/details?id=com.example.app';
+const appStoreLink = master.appStoreLink??"https://apps.apple.com/ro/app/second-hub/id6745817664";
+const playStoreLink = master.playStoreLink??"https://play.google.com/store/apps/details?id=com.second.hub&hl=en";
 console.log(appStoreLink, playStoreLink);
 
 // Popup management
