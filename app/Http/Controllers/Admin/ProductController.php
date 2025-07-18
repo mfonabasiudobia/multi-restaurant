@@ -33,19 +33,19 @@ use App\Repositories\MediaRepository;
 
 class ProductController extends Controller
 {
-    
+
     /**
      * Display a listing of the products.
      */
     public function index(Request $request)
     {
         $query = Product::query();
-        
+
         // Log filter parameters for debugging
         \Log::info('Filter parameters:', [
             'status' => $request->status,
             'shop' => $request->shop,
-            'category_id' => $request->category_id, 
+            'category_id' => $request->category_id,
             'search' => $request->search,
             'is_active' => $request->is_active
         ]);
@@ -63,7 +63,7 @@ class ProductController extends Controller
 
         // Category filter
         if ($request->filled('category_id')) {
-            $query->whereHas('categories', function($q) use ($request) {
+            $query->whereHas('categories', function ($q) use ($request) {
                 $q->where('categories.id', $request->category_id);
             });
         }
@@ -75,12 +75,12 @@ class ProductController extends Controller
 
         // Search filter
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('code', 'like', "%{$request->search}%")
-                  ->orWhereHas('categories', function($sq) use ($request) {
-                      $sq->where('name', 'like', "%{$request->search}%");
-                  });
+                    ->orWhere('code', 'like', "%{$request->search}%")
+                    ->orWhereHas('categories', function ($sq) use ($request) {
+                        $sq->where('name', 'like', "%{$request->search}%");
+                    });
             });
         }
 
@@ -89,22 +89,22 @@ class ProductController extends Controller
             if ($request->status === '0') {
                 // New item requests
                 $query->where('is_approve', false)
-                      ->where('is_new', true);
-                
+                    ->where('is_new', true);
+
                 // Set page title
                 $pageTitle = __('Item Requests');
             } elseif ($request->status === '1') {
                 // Update requests
                 $query->where('is_approve', false)
-                      ->where('is_new', false);
-                
+                    ->where('is_new', false);
+
                 // Set page title
                 $pageTitle = __('Update Requests');
             }
         } elseif ($request->approve === 'true') {
             // Approved items
             $query->where('is_approve', true);
-            
+
             // Set page title
             $pageTitle = __('Accepted Items');
         } else {
@@ -114,9 +114,9 @@ class ProductController extends Controller
 
         // Get paginated results with relationships
         $products = $query->with(['categories', 'media', 'videos', 'shop'])
-                         ->latest()
-                         ->paginate(20)
-                         ->withQueryString();
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Process videos for each product
         $products->through(function ($product) {
@@ -130,7 +130,7 @@ class ProductController extends Controller
 
         return view('admin.product.index', compact(
             'products',
-            'shops', 
+            'shops',
             'categories',
             'pageTitle'
         ));
@@ -175,12 +175,12 @@ class ProductController extends Controller
         $data = (object) [
             'title' => $message,
             'content' => $content,
-            'url' => '/shop/product/'.$product->id.'/show',
+            'url' => '/shop/product/' . $product->id . '/show',
             'icon' => 'bi-bag-check-fill',
             'type' => 'success',
             'shop_id' => $product->shop_id,
         ];
-        
+
         NotificationRepository::storeByRequest($data);
 
         // Send WhatsApp notification if enabled
@@ -199,9 +199,9 @@ class ProductController extends Controller
     {
         try {
             \Log::info('Deleting product', ['product_id' => $product->id]);
-            
+
             $shopID = $product->shop_id;
-            
+
             // Delete associated logistics entry if exists
             if ($product->bag_number) {
                 $logistics = LogisticsRepository::findByBagNumber($product->bag_number);
@@ -209,14 +209,14 @@ class ProductController extends Controller
                     LogisticsRepository::delete($logistics);
                 }
             }
-            
+
             // Delete media files
             foreach ($product->medias as $media) {
                 if (Storage::exists($media->src)) {
                     Storage::delete($media->src);
                 }
             }
-            
+
             // Delete videos and their thumbnails
             foreach ($product->videos as $video) {
                 if (Storage::exists($video->src)) {
@@ -226,21 +226,20 @@ class ProductController extends Controller
                     Storage::delete($video->thumbnail);
                 }
             }
-            
+
             // Delete associated relationships
             $product->medias()->delete();
             $product->videos()->delete();
-            $product->sizes()->delete();
+            // $product->sizes()->delete();
             $product->reviews()->delete();
             $product->categories()->detach();
-            
+
             // Finally delete the product
             $product->delete();
-            
+
             return redirect()
                 ->back()
                 ->withSuccess(__('Product deleted successfully'));
-                
         } catch (\Exception $e) {
             \Log::error('Error deleting product: ' . $e->getMessage());
             return redirect()
@@ -271,19 +270,19 @@ class ProductController extends Controller
         $rootShop = generaleSetting('rootShop');
         \Log::info($rootShop);
         \Log::info($product);
-        
+
         // Get all active shops for admin to select from
         $shops = ShopRepository::query()->isActive()->get();
 
         // Console log product sizes
         \Log::info('Product sizes:', ['sizes' => $product->sizes()->get()]);
 
-        
-       
+
+
         $categories = $rootShop?->categories()->active()->get();
         $units = $rootShop?->units()->isActive()->get();
         $sizes = $rootShop?->sizes()->isActive()->get();
-        
+
 
         $categoryId = $product->categories()->latest('id')->first()->id;
 
@@ -316,7 +315,6 @@ class ProductController extends Controller
             return redirect()
                 ->route('admin.product.index')
                 ->withSuccess(__('Product updated successfully'));
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Product update error: ' . $e->getMessage());
@@ -345,11 +343,10 @@ class ProductController extends Controller
         // Handle thumbnail
         if ($request->hasFile('additionThumbnail')) {
             // Delete old thumbnail if exists
-            
+
             foreach ($request->file('additionThumbnail') as $image) {
                 MediaRepository::storeByRequest($image, 'products', 'additionThumbnail');
             }
-            
         }
 
         // Handle additional images
@@ -376,7 +373,7 @@ class ProductController extends Controller
             Storage::delete($video->thumbnail);
         }
         $video->delete();
-        
+
         return back()->withSuccess(__('Video removed successfully'));
     }
 
@@ -422,21 +419,20 @@ class ProductController extends Controller
             }
 
             return view('admin.product.create', compact(
-                'categories', 
-                'units', 
-                'sizes', 
-                'taxs', 
-                'seasons', 
-                'qualities', 
+                'categories',
+                'units',
+                'sizes',
+                'taxs',
+                'seasons',
+                'qualities',
                 'shops'
             ));
-
         } catch (\Exception $e) {
             \Log::error('Error in create product view:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return back()->withError(__('Error loading product creation form. Please try again.'));
         }
     }
@@ -449,15 +445,17 @@ class ProductController extends Controller
         try {
             DB::beginTransaction();
 
+
             // Pass the request object directly, not the validated data
             $product = ProductRepository::storeByRequest($request);
+
+            // return response()->json(['status' => true]);
 
             DB::commit();
 
             return redirect()
                 ->route('admin.product.index')
                 ->withSuccess(__('Product created successfully'));
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Product creation error: ' . $e->getMessage());
@@ -473,7 +471,7 @@ class ProductController extends Controller
         do {
             $code = mt_rand(100000, 999999);
         } while (Product::where('code', $code)->exists());
-        
+
         return $code;
     }
 
@@ -501,7 +499,7 @@ class ProductController extends Controller
         try {
             // Get users who have enabled WhatsApp notifications
             $users = User::role('customer')
-                ->whereHas('notificationPreferences', function($query) {
+                ->whereHas('notificationPreferences', function ($query) {
                     $query->where('whatsapp_enabled', true);
                 })
                 ->whereNotNull('phone')
@@ -539,7 +537,7 @@ class ProductController extends Controller
                 try {
                     // Format phone number for WhatsApp - ensure it has country code
                     $phone = ltrim($user->phone_code, '+') . ltrim($user->phone, '0');
-                    
+
                     // Send WhatsApp message using Twilio
                     $twilioService->sendWhatsApp($phone, $whatsappMessage);
                     $successCount++;
@@ -553,9 +551,8 @@ class ProductController extends Controller
                         'url' => "/products/{$product->id}/details",
                         'icon' => 'bi-whatsapp'
                     ];
-                    
-                    NotificationRepository::storeByRequest($notify);
 
+                    NotificationRepository::storeByRequest($notify);
                 } catch (\Exception $e) {
                     \Log::error("Failed to send WhatsApp notification to {$user->phone}: " . $e->getMessage());
                     $failureCount++;
@@ -566,7 +563,6 @@ class ProductController extends Controller
                 'success' => true,
                 'message' => "WhatsApp notifications sent successfully to {$successCount} users. Failed for {$failureCount} users."
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Error sending WhatsApp notifications: ' . $e->getMessage());
             return response()->json([
@@ -589,9 +585,9 @@ class ProductController extends Controller
         $this->applyFilters($query, $request);
 
         $products = $query->with(['categories', 'media', 'videos', 'shop'])
-                         ->latest()
-                         ->paginate(20)
-                         ->withQueryString();
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Process videos for each product
         $products->through(function ($product) {
@@ -606,7 +602,7 @@ class ProductController extends Controller
 
         return view('admin.product.index', compact(
             'products',
-            'shops', 
+            'shops',
             'categories',
             'pageTitle'
         ));
@@ -625,9 +621,9 @@ class ProductController extends Controller
         $this->applyFilters($query, $request);
 
         $products = $query->with(['categories', 'media', 'videos', 'shop'])
-                         ->latest()
-                         ->paginate(20)
-                         ->withQueryString();
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Process videos for each product
         $products->through(function ($product) {
@@ -642,7 +638,7 @@ class ProductController extends Controller
 
         return view('admin.product.index', compact(
             'products',
-            'shops', 
+            'shops',
             'categories',
             'pageTitle'
         ));
@@ -660,9 +656,9 @@ class ProductController extends Controller
         $this->applyFilters($query, $request);
 
         $products = $query->with(['categories', 'media', 'videos', 'shop'])
-                         ->latest()
-                         ->paginate(20)
-                         ->withQueryString();
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         // Process videos for each product
         $products->through(function ($product) {
@@ -677,7 +673,7 @@ class ProductController extends Controller
 
         return view('admin.product.index', compact(
             'products',
-            'shops', 
+            'shops',
             'categories',
             'pageTitle'
         ));
@@ -695,7 +691,7 @@ class ProductController extends Controller
 
         // Category filter
         if ($request->filled('category_id')) {
-            $query->whereHas('categories', function($q) use ($request) {
+            $query->whereHas('categories', function ($q) use ($request) {
                 $q->where('categories.id', $request->category_id);
             });
         }
@@ -707,12 +703,12 @@ class ProductController extends Controller
 
         // Search filter
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('code', 'like', "%{$request->search}%")
-                  ->orWhereHas('categories', function($sq) use ($request) {
-                      $sq->where('name', 'like', "%{$request->search}%");
-                  });
+                    ->orWhere('code', 'like', "%{$request->search}%")
+                    ->orWhereHas('categories', function ($sq) use ($request) {
+                        $sq->where('name', 'like', "%{$request->search}%");
+                    });
             });
         }
     }
