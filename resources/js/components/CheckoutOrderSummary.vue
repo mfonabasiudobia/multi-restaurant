@@ -44,7 +44,7 @@
                     {{ $t('Total Weight') }}
                 </div>
                 <div class="text-slate-950 text-base font-normal leading-normal">
-                    {{ calculateTotalWeight().toFixed(2) }} {{ weightUnit }}
+                    {{ calculateTotalWeight().toFixed(2) }} {{ weightUnit }} 
                 </div>
             </div>
 
@@ -983,7 +983,7 @@ const fetchCouponApply = () => {
 
             basketStore.delivery_charge = response.data.data.checkout.delivery_charge;
             basketStore.coupon_discount = response.data.data.checkout.coupon_discount;
-            basketStore.payable_amount = response.data.data.checkout.payable_amount;
+            // basketStore.payable_amount = response.data.data.checkout.payable_amount;
 
             if (hasCoupon.value) {
                 toast.success(response.data.message, {
@@ -1098,9 +1098,11 @@ const fetchCheckout = async () => {
                 basketStore.total_amount = checkoutData.total_amount;
             }
 
+            
             basketStore.delivery_charge = checkoutData.delivery_charge;
             basketStore.coupon_discount = checkoutData.coupon_discount;
             basketStore.payable_amount = checkoutData.payable_amount;
+            basketStore.total_size_amount = checkoutData.total_size_amount;
           
             basketStore.total_weight = response.data.data?.total_weight;
             basketStore.order_tax_amount = checkoutData.order_tax_amount || 0;
