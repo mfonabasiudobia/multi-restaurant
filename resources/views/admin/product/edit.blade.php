@@ -606,11 +606,11 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
         border-radius: 4px !important;
     }
 </style>
-
+@endpush
 
 @push('scripts')
 <!-- TinyMCE -->
-<script src="https://cdn.tiny.cloud/1/aitzyhoh0t5glsrzd6cu7rhfom62dpvx00yvffmx822yskad/tinymce/7/tinymce.min.js"
+<script src="https://cdn.tiny.cloud/1/404ticmbmer7eyfwwt48gxb8isw74kc374o8ae3p06vqow2v/tinymce/7/tinymce.min.js"
     referrerpolicy="origin"></script>
 <!-- additional thumbnail script -->
 <script>
@@ -675,14 +675,14 @@ $productPrice = $product->discount_price > 0 ? $product->discount_price : $produ
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize TinyMCE
-        tinymce.init({
-            selector: 'textarea',
-            plugins: [
-                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists',
-                'media', 'searchreplace', 'table', 'visualblocks', 'wordcount'
-            ],
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
-        });
+       tinymce.init({
+  selector: 'textarea',
+  plugins: [
+    'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link',
+    'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount'
+  ],
+  toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+});
 
 
         // Initialize Select2 for all dropdowns
