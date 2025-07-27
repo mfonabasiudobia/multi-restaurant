@@ -70,8 +70,10 @@ class CategoryController extends Controller
         $sortType = $request->sort_type;
         $minPrice = $request->min_price;
         $maxPrice = $request->max_price;
+        $sizeId = $request->size;
         $quality = $request->quality; // New quality filter
         $season = $request->seasons; // New quality filter
+
 
         $category = $categoryID ? CategoryRepository::find($categoryID) : null;
 
@@ -81,13 +83,16 @@ class CategoryController extends Controller
         $productsQuery = ProductRepository::query()
             ->withCount('orders as orders_count')
             ->withAvg('reviews as average_rating', 'rating')
+            ->where('quantity', '>', 0)
+            ->latest()
             ->when($search, fn($query) => $query->where('name', 'like', "%{$search}%"))
             ->when($shop, fn($query) => $query->where('shop_id', $shop->id))
             ->when($shopID && !$shop, fn($query) => $query->where('shop_id', $shopID))
             ->when($categoryID, fn($query) => $query->whereHas('categories', fn($q) => $q->where('id', $categoryID)))
-            ->when($subCategoryID, fn($query) => $query->whereHas('subCategories', fn($q) => $q->where('id', $subCategoryID)))
+            ->when($subCategoryID && ($subCategoryID != 0 || $subCategoryID != null), fn($query) => $query->whereHas('subCategories', fn($q) => $q->where('id', $subCategoryID)))
             ->when($minPrice, fn($query) => $query->where('price', '>=', $minPrice))
             ->when($maxPrice, fn($query) => $query->where('price', '<=', $maxPrice))
+            ->when($sizeId, fn($query) => $query->whereHas('sizes', fn($q) => $q->where('id', $sizeId)))
             ->when($rating, fn($query) => $query->havingRaw('average_rating >= ? AND average_rating < ?', [floatval($rating), floatval($rating) + 1]))
             ->when($quality, fn($query) => $query->where('quality_id', $quality)) // New filter
             ->when($season, fn($query) => $query->where('season_id', $season)) // New filter

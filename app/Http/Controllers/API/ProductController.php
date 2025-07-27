@@ -220,21 +220,23 @@ class ProductController extends Controller
             }
 
             // Apply sorting
-            switch ($request->input('sort', 'newest')) {
-                case 'oldest':
-                    $query->oldest();
-                    break;
-                case 'price_low':
-                    $query->orderBy('price', 'asc');
-                    break;
-                case 'price_high':
-                    $query->orderBy('price', 'desc');
-                    break;
-                case 'newest':
-                default:
-                    $query->latest();
-                    break;
-            }
+            // switch ($request->input('sort', 'newest')) {
+            //     case 'oldest':
+            //         $query->oldest();
+            //         break;
+            //     case 'price_low':
+            //         $query->orderBy('price', 'asc');
+            //         break;
+            //     case 'price_high':
+            //         $query->orderBy('price', 'desc');
+            //         break;
+            //     case 'newest':
+            //     default:
+            //         $query->latest();
+            //         break;
+            // }
+
+            $query->latest();
 
             // Only get active and approved products
             $query->where('is_active', 1)
