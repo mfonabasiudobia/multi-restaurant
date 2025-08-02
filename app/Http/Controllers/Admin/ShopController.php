@@ -36,6 +36,8 @@ class ShopController extends Controller
      */
     public function create()
     {
+        \Log::warning('View Create Shop');
+
         return view('admin.shop.create');
     }
 
@@ -46,6 +48,8 @@ class ShopController extends Controller
     {
         // store shop from shopRepository
         ShopRepository::storeByRequest($request);
+
+        \Log::warning('Store Shop');
 
         return to_route('admin.shop.index')->withSuccess(__('Shop created successfully'));
     }
@@ -61,6 +65,8 @@ class ShopController extends Controller
         $businessInfo = $shop->businessInfo;
         $package = $shop->package;
 
+        \Log::warning('Show Shop');
+
         return view('admin.shop.show', compact('shop', 'businessInfo', 'package'));
     }
 
@@ -69,6 +75,9 @@ class ShopController extends Controller
      */
     public function edit(Shop $shop)
     {
+
+        \Log::warning('View Edit Shop');
+
         return view('admin.shop.edit', compact('shop'));
     }
 
@@ -111,6 +120,8 @@ class ShopController extends Controller
             ]
         );
 
+        \Log::warning('Update Shop');
+
         return to_route('admin.shop.index')->withSuccess(__('Shop updated successfully'));
     }
 
@@ -127,6 +138,8 @@ class ShopController extends Controller
         if ($user->hasRole('root')) {
             return back()->with('error', __('You can not update status of the root shop'));
         }
+
+        \Log::warning('Update Shop Status');
 
         // Update the user status
         $shop->user()->update([

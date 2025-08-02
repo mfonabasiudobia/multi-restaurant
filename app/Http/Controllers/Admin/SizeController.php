@@ -15,7 +15,10 @@ class SizeController extends Controller
     public function index()
     {
         $shop = generaleSetting('shop');
-        $sizes = $shop->sizes()->paginate(20);
+        // $sizes = $shop->sizes()->paginate(20);
+        $sizes = Size::query()->paginate(20);
+
+        \Log::warning('View Size');
 
         return view('admin.size.index', compact('sizes'));
     }
@@ -27,6 +30,8 @@ class SizeController extends Controller
     {
         SizeRepository::storeByRequest($request);
 
+        \Log::warning('Store Size');
+
         return to_route('admin.size.index')->withSuccess(__('Size created successfully'));
     }
 
@@ -36,6 +41,8 @@ class SizeController extends Controller
     public function update(SizeRequest $request, Size $size)
     {
         SizeRepository::updateByRequest($request, $size);
+
+        \Log::warning('Update Size');
 
         return to_route('admin.size.index')->withSuccess(__('Size updated successfully'));
     }
@@ -48,6 +55,8 @@ class SizeController extends Controller
         $size->update([
             'is_active' => ! $size->is_active,
         ]);
+
+        \Log::warning('Toggle Size');
 
         return back()->withSuccess(__('Status updated successfully'));
     }

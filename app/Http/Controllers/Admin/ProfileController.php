@@ -29,6 +29,8 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
+        \Log::warning('View Edit Profile');
+
         return view('admin.profile.edit', compact('user'));
     }
 
@@ -49,7 +51,7 @@ class ProfileController extends Controller
 
         $user = auth()->user();
         $result = UserRepository::updateByRequest($request, $user);
-        
+
         // Log the result for debugging
         \Log::info('Admin profile updated', [
             'user_id' => $user->id,
@@ -67,6 +69,8 @@ class ProfileController extends Controller
      */
     public function changePassword()
     {
+        \Log::warning('View Change Profile');
+
         return view('admin.profile.change-password');
     }
 
@@ -84,6 +88,8 @@ class ProfileController extends Controller
         $user->update([
             'password' => Hash::make($request->password),
         ]);
+
+        \Log::warning('Update Password');
 
         return back()->withSuccess(__('password change successfully'));
     }

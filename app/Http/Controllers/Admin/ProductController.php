@@ -165,6 +165,8 @@ class ProductController extends Controller
         $message = $product->is_new ? 'New Product Approved' : 'Product Update Approved';
         $content = $product->is_new ? 'Your new product has been approved' : 'Your product update has been approved';
 
+        \Log::warning('Approved Product');
+
         try {
             ProductApproveEvent::dispatch($message, $product->shop_id);
         } catch (\Throwable $th) {
@@ -259,6 +261,8 @@ class ProductController extends Controller
 
         $quantitys = request('qty', 4);
 
+        \Log::warning('Generate Barcode');
+
         return view('admin.product.barcode', compact('product', 'quantitys'));
     }
 
@@ -311,6 +315,8 @@ class ProductController extends Controller
             ProductRepository::updateByRequest($request, $product);
 
             DB::commit();
+
+            \Log::warning('Update Product');
 
             return redirect()
                 ->route('admin.product.index')
@@ -372,6 +378,9 @@ class ProductController extends Controller
         if ($video->thumbnail && Storage::exists($video->thumbnail)) {
             Storage::delete($video->thumbnail);
         }
+
+        \Log::warning('Remove Product Video');
+
         $video->delete();
 
         return back()->withSuccess(__('Video removed successfully'));
@@ -453,6 +462,8 @@ class ProductController extends Controller
 
             DB::commit();
 
+            \Log::warning('Save Product');
+
             return redirect()
                 ->route('admin.product.index')
                 ->withSuccess(__('Product created successfully'));
@@ -481,6 +492,8 @@ class ProductController extends Controller
             $product->update([
                 'is_active' => !$product->is_active
             ]);
+
+            \Log::warning('Toggle Product Status');
 
             return response()->json([
                 'success' => true,
@@ -600,6 +613,8 @@ class ProductController extends Controller
         $shops = ShopRepository::query()->isActive()->get();
         $pageTitle = __('Item Requests');
 
+        \Log::warning('Item Requests');
+
         return view('admin.product.index', compact(
             'products',
             'shops',
@@ -636,6 +651,8 @@ class ProductController extends Controller
         $shops = ShopRepository::query()->isActive()->get();
         $pageTitle = __('Update Requests');
 
+        \Log::warning('Update Product');
+
         return view('admin.product.index', compact(
             'products',
             'shops',
@@ -670,6 +687,8 @@ class ProductController extends Controller
         $categories = Category::all();
         $shops = ShopRepository::query()->isActive()->get();
         $pageTitle = __('Accepted Items');
+
+        \Log::warning('View Approved Items');
 
         return view('admin.product.index', compact(
             'products',

@@ -14,6 +14,8 @@ class PusherConfigController extends Controller
     */
     public function index()
     {
+        \Log::warning('View Pusher Config');
+
         return view('admin.pusher-config');
     }
 
@@ -24,7 +26,9 @@ class PusherConfigController extends Controller
         }
 
         $request->validate([
-            'app_id' => 'required', 'app_key' => 'required', 'app_secret' => 'required',
+            'app_id' => 'required',
+            'app_key' => 'required',
+            'app_secret' => 'required',
         ]);
 
         try {
@@ -34,6 +38,8 @@ class PusherConfigController extends Controller
 
             Artisan::call('config:clear');
             Artisan::call('cache:clear');
+
+            \Log::warning('Update Pusher Config');
 
             return to_route('admin.pusher.index')->with('success', __('Pusher config updated successfully'));
         } catch (Exception $e) {
